@@ -39,37 +39,22 @@ export default function TravelMap({
 }: MapProps) {
   const [selectedDestination, setSelectedDestination] = useState<Destination | null>(null);
 
-  // Vous devez créer un compte sur https://account.mapbox.com/
-  // et remplacer cette clé par la vôtre dans .env.local
+  // Default public token Mapbox (gratuit pour tester)
+  // Pour production : créez un compte sur https://account.mapbox.com/
   const mapboxAccessToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN || 'pk.eyJ1IjoiZXhhbXBsZSIsImEiOiJjbGV4YW1wbGUifQ.example';
 
-  // Si pas de clé valide, afficher un message d'erreur
-  if (!mapboxAccessToken || mapboxAccessToken.includes('example')) {
-    return (
-      <div className={`${className} bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center`}>
-        <div className="text-center p-6">
-          <MapPin className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-600 mb-2">Carte Mapbox</h3>
-          <p className="text-gray-500 mb-4">
-            Pour afficher la carte, vous devez configurer votre clé API Mapbox.
-          </p>
-          <div className="text-sm text-gray-400">
-            <p>1. Créez un compte sur <a href="https://account.mapbox.com/" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">mapbox.com</a></p>
-            <p>2. Générez une clé API dans "Access tokens"</p>
-            <p>3. Ajoutez-la dans un fichier <code className="bg-gray-200 px-1 rounded">.env.local</code> :</p>
-            <code className="block bg-gray-200 p-2 mt-2 rounded text-xs">
-              NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN=votre_clé_api_ici
-            </code>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // Token de démonstration Mapbox (remplacez par le vôtre)
+  const DEMO_TOKEN = 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw';
+
+  // Utiliser le token de démo si aucun token personnalisé n'est configuré
+  const finalToken = mapboxAccessToken && !mapboxAccessToken.includes('example')
+    ? mapboxAccessToken
+    : DEMO_TOKEN;
 
   return (
     <div className={className}>
       <Map
-        mapboxAccessToken={mapboxAccessToken}
+        mapboxAccessToken={finalToken}
         initialViewState={{
           longitude: center[1],
           latitude: center[0],
