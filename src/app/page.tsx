@@ -68,7 +68,7 @@ export default function Home() {
   return (
     <div className="h-screen flex">
       {/* Panel d'information - Gauche */}
-      <div className="w-80 glass-card border-r border-white/20 flex flex-col">
+      <div className="w-80 bg-white/80 backdrop-blur-md border-r border-white/20 flex flex-col shadow-xl">
         {/* Header du panel */}
         <div className="p-6 border-b border-white/10">
           <h1 className="text-2xl font-bold text-black">TravelPlanner</h1>
@@ -78,7 +78,7 @@ export default function Home() {
         {/* Contenu du panel */}
         <div className="flex-1 p-6 space-y-6">
           {/* Sélecteur de style */}
-          <Card className="minimal-card">
+          <Card className="bg-white/80 backdrop-blur-md border border-white/20 shadow-lg">
             <div className="p-4">
               <h3 className="text-lg font-semibold text-black mb-3 flex items-center gap-2">
                 🎨 Style de carte
@@ -91,7 +91,7 @@ export default function Home() {
           </Card>
 
           {/* Informations sur les destinations */}
-          <Card className="minimal-card">
+          <Card className="bg-white/80 backdrop-blur-md border border-white/20 shadow-lg">
             <div className="p-4">
               <h3 className="text-lg font-semibold text-black mb-3 flex items-center gap-2">
                 <MapPin className="w-5 h-5" />
@@ -99,7 +99,7 @@ export default function Home() {
               </h3>
               <div className="space-y-3">
                 {sampleDestinations.map((destination) => (
-                  <div key={destination.id} className="glass rounded-lg p-3">
+                  <div key={destination.id} className="bg-white/60 backdrop-blur-sm rounded-lg p-3 border border-white/20">
                     <h4 className="font-medium text-black">{destination.name}</h4>
                     <p className="text-sm text-gray-600 mt-1">{destination.description}</p>
                     {destination.category && (
@@ -114,15 +114,15 @@ export default function Home() {
           </Card>
 
           {/* Actions */}
-          <Card className="minimal-card">
+          <Card className="bg-white/80 backdrop-blur-md border border-white/20 shadow-lg">
             <div className="p-4">
               <h3 className="text-lg font-semibold text-black mb-3">🚀 Actions</h3>
               <div className="space-y-2">
-                <Button className="w-full minimal-button bg-black/10 hover:bg-black/20 text-black border-black/20">
+                <Button className="w-full bg-black/10 hover:bg-black/20 text-black border border-black/20 backdrop-blur-sm transition-all duration-300 hover:scale-105">
                   <Plus className="w-4 h-4 mr-2" />
                   Nouveau voyage
                 </Button>
-                <Button variant="outline" className="w-full glass-button border-black/20 text-black hover:bg-black/10">
+                <Button variant="outline" className="w-full bg-white/20 backdrop-blur-sm border border-black/20 text-black hover:bg-black/10 transition-all duration-300 hover:scale-105">
                   Importer itinéraire
                 </Button>
               </div>
@@ -130,18 +130,18 @@ export default function Home() {
           </Card>
 
           {/* Statistiques */}
-          <Card className="minimal-card">
+          <Card className="bg-white/80 backdrop-blur-md border border-white/20 shadow-lg">
             <div className="p-4">
               <h3 className="text-lg font-semibold text-black mb-3 flex items-center gap-2">
                 <BarChart3 className="w-5 h-5" />
                 Statistiques
               </h3>
               <div className="grid grid-cols-2 gap-4">
-                <div className="glass rounded-lg p-3 text-center">
+                <div className="bg-white/60 backdrop-blur-sm rounded-lg p-3 text-center border border-white/20">
                   <div className="text-2xl font-bold text-black">1</div>
                   <div className="text-sm text-gray-600">Voyage</div>
                 </div>
-                <div className="glass rounded-lg p-3 text-center">
+                <div className="bg-white/60 backdrop-blur-sm rounded-lg p-3 text-center border border-white/20">
                   <div className="text-2xl font-bold text-black">3</div>
                   <div className="text-sm text-gray-600">Destinations</div>
                 </div>

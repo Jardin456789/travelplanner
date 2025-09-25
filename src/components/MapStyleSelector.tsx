@@ -23,10 +23,10 @@ export default function MapStyleSelector({ currentStyle, onStyleChange }: MapSty
         <button
           key={style.value}
           onClick={() => onStyleChange(style.value)}
-          className={`glass-button rounded-lg p-3 text-left transition-all duration-300 hover:scale-105 ${
+          className={`bg-white/20 backdrop-blur-sm border rounded-lg p-3 text-left transition-all duration-300 hover:scale-105 hover:bg-white/30 ${
             currentStyle === style.value
-              ? 'bg-black/20 border-black/40 text-black'
-              : 'border-white/30 text-gray-700 hover:bg-white/20'
+              ? 'border-black/40 bg-black/20 text-black'
+              : 'border-white/30 text-gray-700'
           }`}
         >
           <div className="flex items-center gap-2 mb-1">
