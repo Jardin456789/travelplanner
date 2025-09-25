@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { DayItinerary } from '@/types/travel';
-import { ChevronDown, ChevronUp, Clock, MapPin, Calendar } from 'lucide-react';
+import { ChevronDown, ChevronUp, Clock, MapPin } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 interface ItineraryCardProps {

@@ -2,18 +2,15 @@
 
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { ChevronDown, ChevronUp, Calendar } from 'lucide-react';
-import { format, parseISO, isAfter, isBefore, isEqual } from 'date-fns';
+import { parseISO, isBefore, isEqual } from 'date-fns';
 import dynamic from 'next/dynamic';
 import ItineraryCard from '@/components/ItineraryCard';
 import MapStyleSelector from '@/components/MapStyleSelector';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { Itinerary, Destination, DayItinerary } from '@/types/travel';
+import { Destination, DayItinerary } from '@/types/travel';
 import { MAPBOX_STYLES } from '@/components/Map';
 import { itinerary, destinations, dayItineraries } from '@/data/itinerary';
-import { Plus, MapPin, BarChart3 } from 'lucide-react';
+import { Plus } from 'lucide-react';
 
 // Type pour représenter une étape ou un groupe d'étapes consécutives
 type StepGroup = {
@@ -51,7 +48,7 @@ export default function Home() {
         dayDate.setHours(0, 0, 0, 0);
         return isEqual(dayDate, today) || isBefore(dayDate, today);
       });
-  }, [dayItineraries]);
+  }, []);
 
   // Fonction pour grouper les étapes consécutives dans la même destination
   const groupConsecutiveSteps = (days: DayItinerary[]): StepGroup[] => {
@@ -229,7 +226,7 @@ export default function Home() {
                   {/* Étapes du mois */}
                   {isExpanded && (
                     <div className="space-y-2 ml-3 border-l border-gray-300 pl-3">
-                      {monthDays.map((stepGroup, index) => {
+                      {monthDays.map((stepGroup) => {
                         if (stepGroup.type === 'single') {
                           // Étape unique
                           const day = stepGroup.day;
@@ -320,7 +317,7 @@ export default function Home() {
                                           </span>
                                           {currentStep && currentStep.order === day.order && (
                                             <span className="text-[10px] px-1 py-0.5 bg-green-100 text-green-800 rounded font-medium">
-                                              Aujourd'hui
+                                              Today
                                             </span>
                                           )}
                                         </div>

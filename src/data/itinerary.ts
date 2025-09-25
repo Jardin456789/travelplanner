@@ -1,4 +1,4 @@
-import { Destination, DayItinerary, Itinerary, TransportSegment } from '@/types/travel';
+import { Destination, DayItinerary, Itinerary } from '@/types/travel';
 
 export const destinations: Destination[] = [
   {
