@@ -1,24 +1,90 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🗺️ TravelPlanner
 
-## Getting Started
+Une application de planification de voyages avec cartes interactives, construite avec Next.js, TypeScript et Mapbox.
 
-First, run the development server:
+## 🚀 Démarrage rapide
+
+### 1. Installation des dépendances
+
+```bash
+npm install
+```
+
+### 2. Configuration de Mapbox
+
+1. Créez un compte gratuit sur [mapbox.com](https://account.mapbox.com/)
+2. Générez une clé API dans la section "Access tokens"
+3. Créez un fichier `.env.local` à la racine du projet :
+
+```env
+NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN=votre_clé_api_mapbox_ici
+```
+
+### 3. Lancer le serveur de développement
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Ouvrez [http://localhost:3000](http://localhost:3000) pour voir l'application.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🛠️ Technologies utilisées
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **Next.js 15** - Framework React avec App Router
+- **TypeScript** - Typage statique
+- **Tailwind CSS** - Framework CSS utilitaire
+- **Mapbox GL JS** - Cartes interactives
+- **React Map GL** - Composants React pour Mapbox
+- **React Hook Form** - Gestion des formulaires
+- **Zod** - Validation des données
+- **Lucide React** - Icônes
+
+## 🎨 Personnalisation des cartes
+
+### Styles prédéfinis Mapbox
+
+L'application inclut **8 styles de carte prédéfinis** que vous pouvez changer en temps réel :
+
+- **🗺️ Streets** - Carte routière classique
+- **🛰️ Satellite** - Vue satellite pure
+- **🛰️ Satellite + Streets** - Satellite avec noms de rues
+- **🏔️ Outdoors** - Optimisé pour les activités extérieures
+- **☀️ Light** - Thème clair minimaliste
+- **🌙 Dark** - Thème sombre élégant
+- **🚗 Navigation (Jour)** - Optimisé pour la conduite de jour
+- **🚗 Navigation (Nuit)** - Optimisé pour la conduite de nuit
+
+### Styles personnalisés avancés
+
+Pour créer vos propres styles, utilisez [Mapbox Studio](https://studio.mapbox.com/) :
+
+1. Connectez-vous à votre compte Mapbox
+2. Créez un nouveau style ou dupliquez un style existant
+3. Personnalisez les couleurs, polices, icônes
+4. Publiez votre style et récupérez l'URL
+5. Utilisez l'URL dans votre application
+
+```typescript
+// Exemple d'utilisation d'un style personnalisé
+const customStyle = 'mapbox://styles/votre-compte/votre-style-id';
+<TravelMap mapStyle={customStyle} />
+```
+
+## 📁 Structure du projet
+
+```
+src/
+├── app/                    # Pages Next.js (App Router)
+│   ├── page.tsx           # Page d'accueil
+│   ├── layout.tsx         # Layout principal
+│   └── globals.css        # Styles globaux
+├── components/            # Composants React réutilisables
+│   ├── Map.tsx           # Carte interactive Mapbox
+│   └── ItineraryCard.tsx # Carte d'itinéraire
+├── types/                # Types TypeScript
+│   └── travel.ts         # Types pour les voyages
+└── lib/                  # Utilitaires
+```
 
 ## Learn More
 
