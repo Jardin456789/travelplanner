@@ -2,27 +2,28 @@
 
 import { useState } from 'react';
 import { DayItinerary } from '@/types/travel';
-import { ChevronDown, ChevronUp, Clock, MapPin } from 'lucide-react';
+import { ChevronDown, ChevronUp, Clock, MapPin, CheckCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { formatDate } from '@/lib/date-utils';
 
 interface ItineraryCardProps {
   dayItinerary: DayItinerary;
   isSelected?: boolean;
+  isPast?: boolean;
   onSelect?: () => void;
 }
 
-export default function ItineraryCard({ dayItinerary, isSelected = false, onSelect }: ItineraryCardProps) {
+export default function ItineraryCard({ dayItinerary, isSelected = false, isPast = false, onSelect }: ItineraryCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
-  const formattedDate = new Date(dayItinerary.date).toLocaleDateString('fr-FR', {
-    month: 'long',
-    year: 'numeric'
-  });
+  const formattedDate = formatDate(dayItinerary.date);
 
   return (
     <div className={`border rounded-md overflow-hidden transition-colors ${
       isSelected
         ? 'bg-blue-50 border-blue-300'
+        : isPast
+        ? 'bg-green-50 border-green-300'
         : 'bg-white border-gray-200'
     }`}>
       {/* En-tête compact - toujours visible */}
@@ -39,8 +40,12 @@ export default function ItineraryCard({ dayItinerary, isSelected = false, onSele
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center text-xs font-medium text-gray-700">
-              {dayItinerary.order}
+            <div className={`hidden lg:block w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${
+              isPast
+                ? 'bg-green-500 text-white'
+                : 'bg-gray-200 text-gray-700'
+            }`}>
+              {isPast ? <CheckCircle className="w-4 h-4" /> : dayItinerary.order}
             </div>
             <div>
               <h4 className="font-medium text-gray-900 text-sm">{dayItinerary.destination?.name || 'Destination inconnue'}</h4>
@@ -60,6 +65,14 @@ export default function ItineraryCard({ dayItinerary, isSelected = false, onSele
       {/* Contenu détaillé - visible seulement si expanded */}
       {isExpanded && (
         <div className="px-4 pb-4 border-t border-white/30">
+          {/* Date précise */}
+          <div className="bg-gray-50 rounded-lg p-3 mt-3 border border-gray-200">
+            <div className="flex items-center gap-2 text-sm text-gray-700">
+              <span className="font-medium">📅 Date :</span>
+              <span>{formattedDate}</span>
+            </div>
+          </div>
+
           {/* Notes du jour */}
           {dayItinerary.notes && (
             <div className="bg-blue-50/80 backdrop-blur-sm rounded-lg p-3 mt-3 border border-blue-100/50">

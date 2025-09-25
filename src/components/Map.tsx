@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { parseISO, isBefore, isEqual } from 'date-fns';
-import Map, { Popup, NavigationControl, ScaleControl, MapRef } from 'react-map-gl';
+import Map, { Popup, NavigationControl, ScaleControl, MapRef, Marker } from 'react-map-gl';
 import type { MapMouseEvent } from 'mapbox-gl';
 import { Destination, DayItinerary } from '@/types/travel';
 import { calculateOptimalView } from '@/lib/map-utils';
@@ -82,19 +82,7 @@ export default function TravelMap({
   const [currentZoomLevel, setCurrentZoomLevel] = useState<number>(providedZoom || 6);
   const mapRef = useRef<MapRef>(null);
 
-  // Déterminer l'étape actuelle basée sur la date
-  const currentStep = useMemo(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0); // Reset time to start of day
-
-    return dayItineraries
-      .sort((a, b) => a.order - b.order)
-      .find(day => {
-        const dayDate = parseISO(day.date);
-        dayDate.setHours(0, 0, 0, 0);
-        return isEqual(dayDate, today) || isBefore(dayDate, today);
-      });
-  }, [dayItineraries]);
+  // L'étape actuelle est déterminée par le parent (selectedStep)
 
   // Centrage automatique sur l'étape sélectionnée (sans changer le zoom)
   useEffect(() => {
@@ -128,8 +116,8 @@ export default function TravelMap({
     }
 
     // Sinon, calculer automatiquement en privilégiant l'étape actuelle
-    return calculateOptimalView(destinations, dayItineraries, currentStep);
-  }, [destinations, dayItineraries, currentStep, providedCenter, providedZoom, mapCenter, currentZoomLevel]);
+    return calculateOptimalView(destinations, dayItineraries, selectedStep);
+  }, [destinations, dayItineraries, selectedStep, providedCenter, providedZoom, mapCenter, currentZoomLevel]);
 
   // Utiliser les hooks pour les données
   const destinationGroups = useDestinationGroups(dayItineraries);
@@ -157,11 +145,11 @@ export default function TravelMap({
   const destinationsGeoJson = useMemo(() => {
     const features = destinationGroups.map((group, index) => {
       // Déterminer le statut du groupe
-      const isCurrentGroup = currentStep &&
-        currentStep.order >= group.startOrder &&
-        currentStep.order <= group.endOrder;
+      const isCurrentGroup = selectedStep &&
+        selectedStep.order >= group.startOrder &&
+        selectedStep.order <= group.endOrder;
 
-      const isPastGroup = currentStep && group.endOrder < currentStep.order;
+      const isPastGroup = selectedStep && group.endOrder < selectedStep.order;
 
       const isSelectedGroup = selectedStep &&
         selectedStep.order >= group.startOrder &&
@@ -191,7 +179,7 @@ export default function TravelMap({
       type: 'FeatureCollection' as const,
       features
     };
-  }, [destinationGroups, currentStep, selectedStep]);
+  }, [destinationGroups, selectedStep]);
 
   // Synchroniser le niveau de zoom actuel avec les changements calculés
   useEffect(() => {
@@ -306,6 +294,24 @@ export default function TravelMap({
 
         <MapLayers routeData={routeData} destinationsGeoJson={destinationsGeoJson} />
         <TransportMarkers segments={transportSegments} />
+
+        {/* GIF au-dessus de l'étape actuelle sur la carte */}
+        {selectedStep && (
+          <Marker
+            longitude={selectedStep.destination.coordinates.lng}
+            latitude={selectedStep.destination.coordinates.lat}
+            offset={[0, -32]}
+            style={{ zIndex: 10 }}
+          >
+            <div className="w-16 h-16 rounded-full bg-white border-4 border-gray-300 flex items-center justify-center shadow-lg pointer-events-none">
+              <img
+                src="/current-step.gif"
+                alt="Étape actuelle"
+                className="w-14 h-14 object-cover rounded-full"
+              />
+            </div>
+          </Marker>
+        )}
 
         {selectedDestination && (
           <Popup

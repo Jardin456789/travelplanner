@@ -95,7 +95,7 @@ export const MapLayers: React.FC<MapLayersProps> = ({ routeData, destinationsGeo
               'case',
               ['get', 'isSelectedStep'], '#000000',
               ['get', 'isCurrentStep'], '#ffffff',
-              ['get', 'isPastStep'], '#6b7280',
+              ['get', 'isPastStep'], '#10b981',
               '#ffffff'
             ],
             'circle-radius': 8,
@@ -104,14 +104,14 @@ export const MapLayers: React.FC<MapLayersProps> = ({ routeData, destinationsGeo
               'case',
               ['get', 'isSelectedStep'], '#000000',
               ['get', 'isCurrentStep'], '#ffffff',
-              ['get', 'isPastStep'], '#6b7280',
+              ['get', 'isPastStep'], '#059669',
               '#ffffff'
             ],
             'circle-opacity': [
               'case',
               ['get', 'isSelectedStep'], 0.9,
               ['get', 'isCurrentStep'], 0.9,
-              0.6
+              0.8
             ]
           }}
         />
