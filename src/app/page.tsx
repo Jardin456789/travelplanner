@@ -59,86 +59,87 @@ const sampleItineraries: Itinerary[] = [
 
 export default function Home() {
   const [mapStyle, setMapStyle] = useState(MAPBOX_STYLES.streets);
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <h1 className="text-2xl font-bold text-gray-900">TravelPlanner</h1>
-            <nav className="flex space-x-4">
-              <a href="/itineraries" className="text-gray-600 hover:text-gray-900">Itinéraires</a>
-              <a href="/map" className="text-gray-600 hover:text-gray-900">Carte</a>
-            </nav>
-          </div>
-        </div>
-      </header>
+    <div className="h-screen flex bg-gray-50">
+      {/* Carte - Plein écran gauche */}
+      <div className="flex-1 relative">
+        <TravelMap
+          destinations={sampleDestinations}
+          center={[48.8566, 2.3522]} // Paris coordinates
+          zoom={12}
+          className="h-full w-full"
+          mapStyle={mapStyle}
+          onStyleChange={setMapStyle}
+        />
+      </div>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Hero Section */}
-        <div className="text-center mb-12">
-          <h2 className="text-4xl font-bold text-gray-900 mb-4">
-            Planifiez vos voyages facilement
-          </h2>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Créez des itinéraires personnalisés, visualisez vos destinations sur la carte,
-            et organisez vos voyages de rêve.
-          </p>
+      {/* Panel d'information - Droite */}
+      <div className="w-80 bg-white shadow-xl border-l border-gray-200 flex flex-col">
+        {/* Header du panel */}
+        <div className="p-6 border-b border-gray-200">
+          <h1 className="text-2xl font-bold text-gray-900">TravelPlanner</h1>
+          <p className="text-sm text-gray-600 mt-1">Planifiez vos voyages</p>
         </div>
 
-        {/* Map Section */}
-        <div className="mb-12">
-          <h3 className="text-2xl font-semibold text-gray-900 mb-6">Carte Interactive</h3>
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            <div className="lg:col-span-3">
-              <TravelMap
-                destinations={sampleDestinations}
-                center={[48.8566, 2.3522]} // Paris coordinates
-                zoom={12}
-                className="h-96 w-full rounded-lg shadow-lg"
-                mapStyle={mapStyle}
-                onStyleChange={setMapStyle}
-              />
-            </div>
-            <div className="lg:col-span-1">
-              <MapStyleSelector
-                currentStyle={mapStyle}
-                onStyleChange={setMapStyle}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Itineraries Section */}
-        <div>
-          <div className="flex justify-between items-center mb-6">
-            <h3 className="text-2xl font-semibold text-gray-900">Mes Itinéraires</h3>
-            <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
-              Nouveau voyage
-            </button>
+        {/* Contenu du panel */}
+        <div className="flex-1 p-6 space-y-6">
+          {/* Sélecteur de style */}
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-3">🎨 Style de carte</h3>
+            <MapStyleSelector
+              currentStyle={mapStyle}
+              onStyleChange={setMapStyle}
+            />
           </div>
 
-          {sampleItineraries.length > 0 ? (
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {sampleItineraries.map((itinerary) => (
-                <ItineraryCard
-                  key={itinerary.id}
-                  itinerary={itinerary}
-                  onClick={() => console.log('Itinerary clicked:', itinerary.id)}
-                />
+          {/* Informations sur les destinations */}
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-3">📍 Destinations ({sampleDestinations.length})</h3>
+            <div className="space-y-3">
+              {sampleDestinations.map((destination) => (
+                <div key={destination.id} className="bg-gray-50 rounded-lg p-3">
+                  <h4 className="font-medium text-gray-900">{destination.name}</h4>
+                  <p className="text-sm text-gray-600 mt-1">{destination.description}</p>
+                  {destination.category && (
+                    <span className="inline-block mt-2 px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                      {destination.category}
+                    </span>
+                  )}
+                </div>
               ))}
             </div>
-          ) : (
-            <div className="text-center py-12">
-              <p className="text-gray-500 text-lg mb-4">Aucun itinéraire pour le moment</p>
-              <button className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors">
-                Créer votre premier voyage
+          </div>
+
+          {/* Actions */}
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-3">🚀 Actions</h3>
+            <div className="space-y-2">
+              <button className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                Nouveau voyage
+              </button>
+              <button className="w-full bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors">
+                Importer itinéraire
               </button>
             </div>
-          )}
+          </div>
+
+          {/* Statistiques */}
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-3">📊 Statistiques</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-blue-50 rounded-lg p-3 text-center">
+                <div className="text-2xl font-bold text-blue-600">1</div>
+                <div className="text-sm text-blue-600">Voyage</div>
+              </div>
+              <div className="bg-green-50 rounded-lg p-3 text-center">
+                <div className="text-2xl font-bold text-green-600">3</div>
+                <div className="text-sm text-green-600">Destinations</div>
+              </div>
+            </div>
+          </div>
         </div>
-      </main>
+      </div>
     </div>
   );
 }
