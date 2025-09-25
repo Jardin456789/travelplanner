@@ -1,70 +1,102 @@
-import { Itinerary } from '@/types/travel';
-import { Calendar, MapPin, DollarSign } from 'lucide-react';
+'use client';
+
+import { useState } from 'react';
+import { DayItinerary } from '@/types/travel';
+import { ChevronDown, ChevronUp, Clock, MapPin, Calendar } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
 interface ItineraryCardProps {
-  itinerary: Itinerary;
-  onClick?: () => void;
+  dayItinerary: DayItinerary;
+  isSelected?: boolean;
+  onSelect?: () => void;
 }
 
-export default function ItineraryCard({ itinerary, onClick }: ItineraryCardProps) {
-  const startDate = new Date(itinerary.startDate).toLocaleDateString();
-  const endDate = new Date(itinerary.endDate).toLocaleDateString();
+export default function ItineraryCard({ dayItinerary, isSelected = false, onSelect }: ItineraryCardProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
 
-  const totalDays = Math.ceil(
-    (new Date(itinerary.endDate).getTime() - new Date(itinerary.startDate).getTime()) /
-    (1000 * 60 * 60 * 24)
-  ) + 1;
+  const formattedDate = new Date(dayItinerary.date).toLocaleDateString('fr-FR', {
+    month: 'long',
+    year: 'numeric'
+  });
 
   return (
-    <div
-      className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow cursor-pointer border border-gray-200"
-      onClick={onClick}
-    >
-      <div className="flex justify-between items-start mb-4">
-        <h3 className="text-xl font-semibold text-gray-900">{itinerary.title}</h3>
-        <span className="text-sm text-gray-500">
-          {totalDays} jour{totalDays > 1 ? 's' : ''}
-        </span>
-      </div>
-
-      {itinerary.description && (
-        <p className="text-gray-600 mb-4 line-clamp-2">{itinerary.description}</p>
-      )}
-
-      <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">
-        <div className="flex items-center gap-1">
-          <Calendar className="w-4 h-4" />
-          <span>{startDate} - {endDate}</span>
-        </div>
-
-        <div className="flex items-center gap-1">
-          <MapPin className="w-4 h-4" />
-          <span>{itinerary.destinations.length} destination{itinerary.destinations.length > 1 ? 's' : ''}</span>
-        </div>
-
-        {itinerary.totalBudget && (
-          <div className="flex items-center gap-1">
-            <DollarSign className="w-4 h-4" />
-            <span>{itinerary.totalBudget} {itinerary.currency || 'EUR'}</span>
+    <div className={`border rounded-md overflow-hidden transition-colors ${
+      isSelected
+        ? 'bg-blue-50 border-blue-300'
+        : 'bg-white border-gray-200'
+    }`}>
+      {/* En-tête compact - toujours visible */}
+      <button
+        onClick={() => {
+          setIsExpanded(!isExpanded);
+          onSelect?.();
+        }}
+        className={`w-full p-3 text-left transition-colors ${
+          isSelected
+            ? 'hover:bg-blue-100'
+            : 'hover:bg-gray-50'
+        }`}
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center text-xs font-medium text-gray-700">
+              {dayItinerary.order}
+            </div>
+            <div>
+              <h4 className="font-medium text-gray-900 text-sm">{dayItinerary.destination?.name || 'Destination inconnue'}</h4>
+              <p className="text-xs text-gray-500">{formattedDate}</p>
+            </div>
           </div>
-        )}
-      </div>
+          <div className="flex items-center gap-1">
+            {isExpanded ? (
+              <ChevronUp className="w-4 h-4 text-gray-500" />
+            ) : (
+              <ChevronDown className="w-4 h-4 text-gray-500" />
+            )}
+          </div>
+        </div>
+      </button>
 
-      <div className="flex flex-wrap gap-1">
-        {itinerary.destinations.slice(0, 3).map((destination) => (
-          <span
-            key={destination.id}
-            className="inline-block px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full"
-          >
-            {destination.name}
-          </span>
-        ))}
-        {itinerary.destinations.length > 3 && (
-          <span className="inline-block px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
-            +{itinerary.destinations.length - 3} autres
-          </span>
-        )}
-      </div>
+      {/* Contenu détaillé - visible seulement si expanded */}
+      {isExpanded && (
+        <div className="px-4 pb-4 border-t border-white/30">
+          {/* Notes du jour */}
+          {dayItinerary.notes && (
+            <div className="bg-blue-50/80 backdrop-blur-sm rounded-lg p-3 mt-3 border border-blue-100/50">
+              <p className="text-sm text-blue-800">{dayItinerary.notes}</p>
+            </div>
+          )}
+
+          {/* Activités */}
+          <div className="space-y-2 mt-3">
+            {dayItinerary.activities.map((activity) => (
+              <div key={activity.id} className="bg-white/60 backdrop-blur-sm rounded-lg p-3 border border-white/30">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <h5 className="font-medium text-black text-sm">{activity.title}</h5>
+                    <p className="text-xs text-gray-600 mt-1">{activity.description}</p>
+                    <div className="flex items-center gap-2 mt-2">
+                      <div className="flex items-center gap-1 text-xs text-gray-500">
+                        <Clock className="w-3 h-3" />
+                        <span>{activity.startTime} - {activity.endTime}</span>
+                      </div>
+                      {activity.category && (
+                        <Badge variant="secondary" className="text-xs">
+                          {activity.category}
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center text-xs text-gray-500">
+                    <MapPin className="w-3 h-3 mr-1" />
+                    <span>{dayItinerary.destination?.name || 'Destination inconnue'}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
