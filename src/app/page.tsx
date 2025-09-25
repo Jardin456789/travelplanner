@@ -4,8 +4,13 @@ import { useState } from 'react';
 import dynamic from 'next/dynamic';
 import ItineraryCard from '@/components/ItineraryCard';
 import MapStyleSelector from '@/components/MapStyleSelector';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 import { Itinerary, Destination } from '@/types/travel';
 import { MAPBOX_STYLES } from '@/components/Map';
+import { Plus, MapPin, BarChart3 } from 'lucide-react';
 
 // Dynamically import TravelMap component to avoid SSR issues with Mapbox
 const TravelMap = dynamic(() => import('@/components/Map'), {
@@ -61,71 +66,88 @@ export default function Home() {
   const [mapStyle, setMapStyle] = useState(MAPBOX_STYLES.streets);
 
   return (
-    <div className="h-screen flex bg-gray-50">
+    <div className="h-screen flex">
       {/* Panel d'information - Gauche */}
-      <div className="w-80 bg-white shadow-xl border-r border-gray-200 flex flex-col">
+      <div className="w-80 glass-card border-r border-white/20 flex flex-col">
         {/* Header du panel */}
-        <div className="p-6 border-b border-gray-200">
-          <h1 className="text-2xl font-bold text-gray-900">TravelPlanner</h1>
+        <div className="p-6 border-b border-white/10">
+          <h1 className="text-2xl font-bold text-black">TravelPlanner</h1>
           <p className="text-sm text-gray-600 mt-1">Planifiez vos voyages</p>
         </div>
 
         {/* Contenu du panel */}
         <div className="flex-1 p-6 space-y-6">
           {/* Sélecteur de style */}
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-3">🎨 Style de carte</h3>
-            <MapStyleSelector
-              currentStyle={mapStyle}
-              onStyleChange={setMapStyle}
-            />
-          </div>
+          <Card className="minimal-card">
+            <div className="p-4">
+              <h3 className="text-lg font-semibold text-black mb-3 flex items-center gap-2">
+                🎨 Style de carte
+              </h3>
+              <MapStyleSelector
+                currentStyle={mapStyle}
+                onStyleChange={setMapStyle}
+              />
+            </div>
+          </Card>
 
           {/* Informations sur les destinations */}
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-3">📍 Destinations ({sampleDestinations.length})</h3>
-            <div className="space-y-3">
-              {sampleDestinations.map((destination) => (
-                <div key={destination.id} className="bg-gray-50 rounded-lg p-3">
-                  <h4 className="font-medium text-gray-900">{destination.name}</h4>
-                  <p className="text-sm text-gray-600 mt-1">{destination.description}</p>
-                  {destination.category && (
-                    <span className="inline-block mt-2 px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
-                      {destination.category}
-                    </span>
-                  )}
-                </div>
-              ))}
+          <Card className="minimal-card">
+            <div className="p-4">
+              <h3 className="text-lg font-semibold text-black mb-3 flex items-center gap-2">
+                <MapPin className="w-5 h-5" />
+                Destinations ({sampleDestinations.length})
+              </h3>
+              <div className="space-y-3">
+                {sampleDestinations.map((destination) => (
+                  <div key={destination.id} className="glass rounded-lg p-3">
+                    <h4 className="font-medium text-black">{destination.name}</h4>
+                    <p className="text-sm text-gray-600 mt-1">{destination.description}</p>
+                    {destination.category && (
+                      <Badge variant="secondary" className="mt-2 text-xs">
+                        {destination.category}
+                      </Badge>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
+          </Card>
 
           {/* Actions */}
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-3">🚀 Actions</h3>
-            <div className="space-y-2">
-              <button className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
-                Nouveau voyage
-              </button>
-              <button className="w-full bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors">
-                Importer itinéraire
-              </button>
+          <Card className="minimal-card">
+            <div className="p-4">
+              <h3 className="text-lg font-semibold text-black mb-3">🚀 Actions</h3>
+              <div className="space-y-2">
+                <Button className="w-full minimal-button bg-black/10 hover:bg-black/20 text-black border-black/20">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Nouveau voyage
+                </Button>
+                <Button variant="outline" className="w-full glass-button border-black/20 text-black hover:bg-black/10">
+                  Importer itinéraire
+                </Button>
+              </div>
             </div>
-          </div>
+          </Card>
 
           {/* Statistiques */}
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-3">📊 Statistiques</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-blue-50 rounded-lg p-3 text-center">
-                <div className="text-2xl font-bold text-blue-600">1</div>
-                <div className="text-sm text-blue-600">Voyage</div>
-              </div>
-              <div className="bg-green-50 rounded-lg p-3 text-center">
-                <div className="text-2xl font-bold text-green-600">3</div>
-                <div className="text-sm text-green-600">Destinations</div>
+          <Card className="minimal-card">
+            <div className="p-4">
+              <h3 className="text-lg font-semibold text-black mb-3 flex items-center gap-2">
+                <BarChart3 className="w-5 h-5" />
+                Statistiques
+              </h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="glass rounded-lg p-3 text-center">
+                  <div className="text-2xl font-bold text-black">1</div>
+                  <div className="text-sm text-gray-600">Voyage</div>
+                </div>
+                <div className="glass rounded-lg p-3 text-center">
+                  <div className="text-2xl font-bold text-black">3</div>
+                  <div className="text-sm text-gray-600">Destinations</div>
+                </div>
               </div>
             </div>
-          </div>
+          </Card>
         </div>
       </div>
 

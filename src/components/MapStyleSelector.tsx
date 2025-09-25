@@ -18,36 +18,33 @@ const STYLE_OPTIONS = [
 
 export default function MapStyleSelector({ currentStyle, onStyleChange }: MapStyleSelectorProps) {
   return (
-    <div className="bg-white rounded-lg shadow-lg p-4 max-w-md">
-      <h3 className="text-lg font-semibold text-gray-900 mb-3">🎨 Style de carte</h3>
-      <div className="grid grid-cols-2 gap-2">
-        {STYLE_OPTIONS.map((style) => (
-          <button
-            key={style.value}
-            onClick={() => onStyleChange(style.value)}
-            className={`p-3 rounded-lg border-2 text-left transition-all ${
-              currentStyle === style.value
-                ? 'border-blue-500 bg-blue-50 text-blue-700'
-                : 'border-gray-200 hover:border-gray-300 text-gray-700'
-            }`}
-          >
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-lg">{style.emoji}</span>
-              <span className="font-medium text-sm">{style.label}</span>
-            </div>
-            <p className="text-xs text-gray-500">{style.description}</p>
-          </button>
-        ))}
-      </div>
+    <div className="grid grid-cols-2 gap-2">
+      {STYLE_OPTIONS.map((style) => (
+        <button
+          key={style.value}
+          onClick={() => onStyleChange(style.value)}
+          className={`glass-button rounded-lg p-3 text-left transition-all duration-300 hover:scale-105 ${
+            currentStyle === style.value
+              ? 'bg-black/20 border-black/40 text-black'
+              : 'border-white/30 text-gray-700 hover:bg-white/20'
+          }`}
+        >
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-lg">{style.emoji}</span>
+            <span className="font-medium text-sm">{style.label}</span>
+          </div>
+          <p className="text-xs text-gray-500">{style.description}</p>
+        </button>
+      ))}
 
-      <div className="mt-4 pt-3 border-t border-gray-200">
-        <p className="text-xs text-gray-500 mb-2">
+      <div className="col-span-2 mt-3 pt-3 border-t border-white/20">
+        <p className="text-xs text-gray-500 text-center">
           💡 Pour des styles personnalisés, utilisez{' '}
           <a
             href="https://studio.mapbox.com/"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-blue-500 hover:underline"
+            className="text-black hover:underline font-medium"
           >
             Mapbox Studio
           </a>
