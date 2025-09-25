@@ -62,20 +62,8 @@ export default function Home() {
 
   return (
     <div className="h-screen flex bg-gray-50">
-      {/* Carte - Plein écran gauche */}
-      <div className="flex-1 relative">
-        <TravelMap
-          destinations={sampleDestinations}
-          center={[48.8566, 2.3522]} // Paris coordinates
-          zoom={12}
-          className="h-full w-full"
-          mapStyle={mapStyle}
-          onStyleChange={setMapStyle}
-        />
-      </div>
-
-      {/* Panel d'information - Droite */}
-      <div className="w-80 bg-white shadow-xl border-l border-gray-200 flex flex-col">
+      {/* Panel d'information - Gauche */}
+      <div className="w-80 bg-white shadow-xl border-r border-gray-200 flex flex-col">
         {/* Header du panel */}
         <div className="p-6 border-b border-gray-200">
           <h1 className="text-2xl font-bold text-gray-900">TravelPlanner</h1>
@@ -139,6 +127,18 @@ export default function Home() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Carte - Plein écran droite */}
+      <div className="flex-1 relative">
+        <TravelMap
+          destinations={sampleDestinations}
+          center={[48.8566, 2.3522]} // Paris coordinates
+          zoom={12}
+          className="h-full w-full"
+          mapStyle={mapStyle}
+          onStyleChange={setMapStyle}
+        />
       </div>
     </div>
   );
