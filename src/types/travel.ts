@@ -28,8 +28,10 @@ export interface Activity {
 
 export interface DayItinerary {
   date: string; // ISO date string
+  destination: Destination; // Destination principale du jour
   activities: Activity[];
   notes?: string;
+  order: number; // Ordre dans l'itinéraire
 }
 
 export interface Itinerary {

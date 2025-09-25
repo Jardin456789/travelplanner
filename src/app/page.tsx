@@ -22,40 +22,121 @@ const TravelMap = dynamic(() => import('@/components/Map'), {
 const sampleDestinations: Destination[] = [
   {
     id: '1',
-    name: 'Tour Eiffel',
-    description: 'La célèbre tour de fer de Paris',
-    coordinates: { lat: 48.8584, lng: 2.2945 },
-    address: 'Champ de Mars, 5 Avenue Anatole France, 75007 Paris',
-    category: 'attraction'
+    name: 'Skopje',
+    description: 'Capitale de la Macédoine du Nord',
+    coordinates: { lat: 41.9981, lng: 21.4254 },
+    address: 'Skopje, Macédoine du Nord',
+    category: 'city'
   },
   {
     id: '2',
-    name: 'Louvre Museum',
-    description: 'Le plus grand musée du monde',
-    coordinates: { lat: 48.8606, lng: 2.3376 },
-    address: 'Rue de Rivoli, 75001 Paris',
-    category: 'museum'
+    name: 'Istanbul',
+    description: 'Métropole entre Europe et Asie',
+    coordinates: { lat: 41.0082, lng: 28.9784 },
+    address: 'Istanbul, Turquie',
+    category: 'city'
   },
   {
     id: '3',
-    name: 'Notre-Dame de Paris',
-    description: 'Cathédrale gothique historique',
-    coordinates: { lat: 48.8530, lng: 2.3499 },
-    address: '6 Parvis Notre-Dame - Pl. Jean-Paul II, 75004 Paris',
-    category: 'attraction'
+    name: 'Ankara',
+    description: 'Capitale de la Turquie',
+    coordinates: { lat: 39.9334, lng: 32.8597 },
+    address: 'Ankara, Turquie',
+    category: 'city'
+  }
+];
+
+const sampleDayItineraries: DayItinerary[] = [
+  {
+    date: '2024-07-15',
+    destination: sampleDestinations[0], // Skopje
+    activities: [
+      {
+        id: '1',
+        title: 'Visite du Vieux Bazar',
+        description: 'Découverte du marché traditionnel',
+        destinationId: '1',
+        startTime: '10:00',
+        endTime: '12:00',
+        category: 'sightseeing'
+      },
+      {
+        id: '2',
+        title: 'Musée de Macédoine',
+        description: 'Histoire et culture macédonienne',
+        destinationId: '1',
+        startTime: '14:00',
+        endTime: '16:00',
+        category: 'museum'
+      }
+    ],
+    notes: 'Arrivée en ville, installation à l\'hôtel',
+    order: 1
+  },
+  {
+    date: '2024-07-16',
+    destination: sampleDestinations[1], // Istanbul
+    activities: [
+      {
+        id: '3',
+        title: 'Visite de Sainte-Sophie',
+        description: 'Chef-d\'œuvre byzantin',
+        destinationId: '2',
+        startTime: '09:00',
+        endTime: '11:00',
+        category: 'sightseeing'
+      },
+      {
+        id: '4',
+        title: 'Bosphore en bateau',
+        description: 'Croisière sur le détroit',
+        destinationId: '2',
+        startTime: '15:00',
+        endTime: '17:00',
+        category: 'sightseeing'
+      }
+    ],
+    notes: 'Voyage en bus depuis Skopje (environ 8h)',
+    order: 2
+  },
+  {
+    date: '2024-07-17',
+    destination: sampleDestinations[2], // Ankara
+    activities: [
+      {
+        id: '5',
+        title: 'Musée des Civilisations Anatoliennes',
+        description: 'Histoire ancienne de l\'Anatolie',
+        destinationId: '3',
+        startTime: '10:00',
+        endTime: '13:00',
+        category: 'museum'
+      },
+      {
+        id: '6',
+        title: 'Citadelle d\'Ankara',
+        description: 'Vue panoramique sur la ville',
+        destinationId: '3',
+        startTime: '15:00',
+        endTime: '17:00',
+        category: 'sightseeing'
+      }
+    ],
+    notes: 'Voyage en train depuis Istanbul (environ 4h)',
+    order: 3
   }
 ];
 
 const sampleItineraries: Itinerary[] = [
   {
     id: '1',
-    title: 'Voyage à Paris',
-    description: 'Une semaine de découverte de la Ville Lumière',
-    startDate: '2024-06-15',
-    endDate: '2024-06-22',
+    title: 'Balkans Express',
+    description: 'Voyage découverte des Balkans et Turquie',
+    startDate: '2024-07-15',
+    endDate: '2024-07-17',
     destinations: sampleDestinations,
-    days: [],
-    totalBudget: 2500,
+    days: sampleDayItineraries,
+    totalBudget: 1800,
     currency: 'EUR',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
@@ -77,77 +158,91 @@ export default function Home() {
 
         {/* Contenu du panel */}
         <div className="flex-1 p-6 space-y-6">
-          {/* Sélecteur de style */}
+          {/* Titre de l'itinéraire */}
           <Card className="bg-white/80 backdrop-blur-md border border-white/20 shadow-lg">
             <div className="p-4">
-              <h3 className="text-lg font-semibold text-black mb-3 flex items-center gap-2">
-                🎨 Style de carte
-              </h3>
-              <MapStyleSelector
-                currentStyle={mapStyle}
-                onStyleChange={setMapStyle}
-              />
+              <h3 className="text-lg font-semibold text-black mb-2">{sampleItineraries[0].title}</h3>
+              <p className="text-sm text-gray-600 mb-3">{sampleItineraries[0].description}</p>
+              <div className="flex items-center gap-4 text-xs text-gray-500">
+                <span>📅 {new Date(sampleItineraries[0].startDate).toLocaleDateString('fr-FR')} - {new Date(sampleItineraries[0].endDate).toLocaleDateString('fr-FR')}</span>
+                <span>💰 {sampleItineraries[0].totalBudget} {sampleItineraries[0].currency}</span>
+              </div>
             </div>
           </Card>
 
-          {/* Informations sur les destinations */}
-          <Card className="bg-white/80 backdrop-blur-md border border-white/20 shadow-lg">
-            <div className="p-4">
-              <h3 className="text-lg font-semibold text-black mb-3 flex items-center gap-2">
-                <MapPin className="w-5 h-5" />
-                Destinations ({sampleDestinations.length})
-              </h3>
-              <div className="space-y-3">
-                {sampleDestinations.map((destination) => (
-                  <div key={destination.id} className="bg-white/60 backdrop-blur-sm rounded-lg p-3 border border-white/20">
-                    <h4 className="font-medium text-black">{destination.name}</h4>
-                    <p className="text-sm text-gray-600 mt-1">{destination.description}</p>
-                    {destination.category && (
-                      <Badge variant="secondary" className="mt-2 text-xs">
-                        {destination.category}
-                      </Badge>
-                    )}
+          {/* Étapes de l'itinéraire */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-black flex items-center gap-2">
+              🗺️ Étapes ({sampleDayItineraries.length})
+            </h3>
+            {sampleDayItineraries.map((day, index) => (
+              <Card key={day.date} className="bg-white/80 backdrop-blur-md border border-white/20 shadow-lg">
+                <div className="p-4">
+                  {/* En-tête du jour */}
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-black/10 rounded-full flex items-center justify-center text-sm font-semibold text-black">
+                        {day.order}
+                      </div>
+                      <div>
+                        <h4 className="font-medium text-black">{day.destination.name}</h4>
+                        <p className="text-xs text-gray-600">
+                          {new Date(day.date).toLocaleDateString('fr-FR', {
+                            weekday: 'long',
+                            day: 'numeric',
+                            month: 'long'
+                          })}
+                        </p>
+                      </div>
+                    </div>
+                    <Badge variant="outline" className="text-xs">
+                      Jour {day.order}
+                    </Badge>
                   </div>
-                ))}
-              </div>
-            </div>
-          </Card>
 
-          {/* Actions */}
-          <Card className="bg-white/80 backdrop-blur-md border border-white/20 shadow-lg">
-            <div className="p-4">
-              <h3 className="text-lg font-semibold text-black mb-3">🚀 Actions</h3>
-              <div className="space-y-2">
-                <Button className="w-full bg-black/10 hover:bg-black/20 text-black border border-black/20 backdrop-blur-sm transition-all duration-300 hover:scale-105">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Nouveau voyage
-                </Button>
-                <Button variant="outline" className="w-full bg-white/20 backdrop-blur-sm border border-black/20 text-black hover:bg-black/10 transition-all duration-300 hover:scale-105">
-                  Importer itinéraire
-                </Button>
-              </div>
-            </div>
-          </Card>
+                  {/* Notes du jour */}
+                  {day.notes && (
+                    <div className="bg-blue-50/80 backdrop-blur-sm rounded-lg p-3 mb-3 border border-blue-100/50">
+                      <p className="text-sm text-blue-800">{day.notes}</p>
+                    </div>
+                  )}
 
-          {/* Statistiques */}
-          <Card className="bg-white/80 backdrop-blur-md border border-white/20 shadow-lg">
-            <div className="p-4">
-              <h3 className="text-lg font-semibold text-black mb-3 flex items-center gap-2">
-                <BarChart3 className="w-5 h-5" />
-                Statistiques
-              </h3>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-white/60 backdrop-blur-sm rounded-lg p-3 text-center border border-white/20">
-                  <div className="text-2xl font-bold text-black">1</div>
-                  <div className="text-sm text-gray-600">Voyage</div>
+                  {/* Activités */}
+                  <div className="space-y-2">
+                    {day.activities.map((activity) => (
+                      <div key={activity.id} className="bg-white/60 backdrop-blur-sm rounded-lg p-3 border border-white/30">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <h5 className="font-medium text-black text-sm">{activity.title}</h5>
+                            <p className="text-xs text-gray-600 mt-1">{activity.description}</p>
+                            <div className="flex items-center gap-2 mt-2">
+                              <span className="text-xs text-gray-500">🕐 {activity.startTime} - {activity.endTime}</span>
+                              {activity.category && (
+                                <Badge variant="secondary" className="text-xs">
+                                  {activity.category}
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <div className="bg-white/60 backdrop-blur-sm rounded-lg p-3 text-center border border-white/20">
-                  <div className="text-2xl font-bold text-black">3</div>
-                  <div className="text-sm text-gray-600">Destinations</div>
-                </div>
-              </div>
-            </div>
-          </Card>
+              </Card>
+            ))}
+          </div>
+
+          {/* Boutons d'action en bas */}
+          <div className="space-y-2">
+            <Button className="w-full bg-black/10 hover:bg-black/20 text-black border border-black/20 backdrop-blur-sm transition-all duration-300 hover:scale-105">
+              <Plus className="w-4 h-4 mr-2" />
+              Modifier itinéraire
+            </Button>
+            <Button variant="outline" className="w-full bg-white/20 backdrop-blur-sm border border-black/20 text-black hover:bg-black/10 transition-all duration-300 hover:scale-105">
+              Exporter PDF
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -155,12 +250,20 @@ export default function Home() {
       <div className="flex-1 relative">
         <TravelMap
           destinations={sampleDestinations}
-          center={[48.8566, 2.3522]} // Paris coordinates
-          zoom={12}
+          center={[41.0082, 28.9784]} // Istanbul coordinates (centre du voyage)
+          zoom={6}
           className="h-full w-full"
           mapStyle={mapStyle}
           onStyleChange={setMapStyle}
         />
+
+        {/* Bouton flottant pour le sélecteur de style */}
+        <div className="absolute top-4 right-4 z-10">
+          <MapStyleSelector
+            currentStyle={mapStyle}
+            onStyleChange={setMapStyle}
+          />
+        </div>
       </div>
     </div>
   );

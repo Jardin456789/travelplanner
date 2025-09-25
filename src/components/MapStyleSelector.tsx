@@ -18,37 +18,25 @@ const STYLE_OPTIONS = [
 
 export default function MapStyleSelector({ currentStyle, onStyleChange }: MapStyleSelectorProps) {
   return (
-    <div className="grid grid-cols-2 gap-2">
-      {STYLE_OPTIONS.map((style) => (
-        <button
-          key={style.value}
-          onClick={() => onStyleChange(style.value)}
-          className={`bg-white/20 backdrop-blur-sm border rounded-lg p-3 text-left transition-all duration-300 hover:scale-105 hover:bg-white/30 ${
-            currentStyle === style.value
-              ? 'border-black/40 bg-black/20 text-black'
-              : 'border-white/30 text-gray-700'
-          }`}
-        >
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-lg">{style.emoji}</span>
-            <span className="font-medium text-sm">{style.label}</span>
-          </div>
-          <p className="text-xs text-gray-500">{style.description}</p>
-        </button>
-      ))}
-
-      <div className="col-span-2 mt-3 pt-3 border-t border-white/20">
-        <p className="text-xs text-gray-500 text-center">
-          💡 Pour des styles personnalisés, utilisez{' '}
-          <a
-            href="https://studio.mapbox.com/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-black hover:underline font-medium"
+    <div className="bg-white/90 backdrop-blur-md rounded-lg p-3 shadow-lg border border-white/30 min-w-[200px]">
+      <div className="text-sm font-medium text-black mb-2">🎨 Style de carte</div>
+      <div className="space-y-1">
+        {STYLE_OPTIONS.map((style) => (
+          <button
+            key={style.value}
+            onClick={() => onStyleChange(style.value)}
+            className={`w-full text-left px-2 py-1 rounded transition-all duration-200 hover:bg-black/10 ${
+              currentStyle === style.value
+                ? 'bg-black/20 text-black font-medium'
+                : 'text-gray-700 hover:text-black'
+            }`}
           >
-            Mapbox Studio
-          </a>
-        </p>
+            <div className="flex items-center gap-2">
+              <span className="text-sm">{style.emoji}</span>
+              <span className="text-xs">{style.label}</span>
+            </div>
+          </button>
+        ))}
       </div>
     </div>
   );
