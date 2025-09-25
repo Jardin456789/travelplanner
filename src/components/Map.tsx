@@ -15,8 +15,9 @@ interface MapProps {
   onStyleChange?: (style: string) => void;
 }
 
-// Styles de carte Mapbox prédéfinis disponibles gratuitement
+// Styles de carte disponibles (Mapbox + alternatives gratuites)
 export const MAPBOX_STYLES = {
+  // Styles Mapbox (nécessitent un token valide)
   streets: 'mapbox://styles/mapbox/streets-v12',
   satellite: 'mapbox://styles/mapbox/satellite-v9',
   satelliteStreets: 'mapbox://styles/mapbox/satellite-streets-v12',
@@ -26,6 +27,32 @@ export const MAPBOX_STYLES = {
   navigationDay: 'mapbox://styles/mapbox/navigation-day-v1',
   navigationNight: 'mapbox://styles/mapbox/navigation-night-v1',
 } as const;
+
+// Styles alternatifs gratuits (pas de token requis)
+export const FREE_STYLES = {
+  osm: {
+    version: 8,
+    sources: {
+      'osm-tiles': {
+        type: 'raster',
+        tiles: [
+          'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png',
+          'https://b.tile.openstreetmap.org/{z}/{x}/{y}.png',
+          'https://c.tile.openstreetmap.org/{z}/{x}/{y}.png'
+        ],
+        tileSize: 256,
+        attribution: '© OpenStreetMap contributors'
+      }
+    },
+    layers: [{
+      id: 'osm-tiles',
+      type: 'raster',
+      source: 'osm-tiles',
+      minzoom: 0,
+      maxzoom: 19
+    }]
+  }
+};
 
 type MapboxStyleKey = keyof typeof MAPBOX_STYLES;
 
@@ -39,17 +66,18 @@ export default function TravelMap({
 }: MapProps) {
   const [selectedDestination, setSelectedDestination] = useState<Destination | null>(null);
 
-  // Default public token Mapbox (gratuit pour tester)
-  // Pour production : créez un compte sur https://account.mapbox.com/
-  const mapboxAccessToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN || 'pk.eyJ1IjoiZXhhbXBsZSIsImEiOiJjbGV4YW1wbGUifQ.example';
+  // Utiliser uniquement la variable d'environnement
+  const mapboxAccessToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
 
-  // Token de démonstration Mapbox (remplacez par le vôtre)
-  const DEMO_TOKEN = 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw';
+  // Token de fallback temporaire pour le développement
+  const FALLBACK_TOKEN = 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNsN3R5NzB6YjBhenozZG8xbzVvcW1xaWsifQ.8Kv3X8zv9yN0QX9YxF5ZGQ';
 
-  // Utiliser le token de démo si aucun token personnalisé n'est configuré
-  const finalToken = mapboxAccessToken && !mapboxAccessToken.includes('example')
-    ? mapboxAccessToken
-    : DEMO_TOKEN;
+  // Utiliser le token de l'environnement ou le fallback
+  const finalToken = mapboxAccessToken || FALLBACK_TOKEN;
+
+  // Déterminer si on utilise Mapbox ou OpenStreetMap
+  const useMapbox = finalToken && finalToken !== FALLBACK_TOKEN;
+  const finalMapStyle = useMapbox ? mapStyle : FREE_STYLES.osm;
 
   return (
     <div className={className}>
@@ -61,7 +89,7 @@ export default function TravelMap({
           zoom: zoom,
         }}
         style={{ width: '100%', height: '100%' }}
-        mapStyle={mapStyle}
+        mapStyle={finalMapStyle}
         onClick={() => setSelectedDestination(null)}
       >
         <NavigationControl position="top-right" />

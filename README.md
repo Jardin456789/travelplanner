@@ -20,6 +20,8 @@ npm install
 NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN=votre_clé_api_mapbox_ici
 ```
 
+**Note :** Si vous ne configurez pas de token, l'application utilisera automatiquement un token de démonstration Mapbox (50k vues/mois gratuites).
+
 ### 3. Lancer le serveur de développement
 
 ```bash
