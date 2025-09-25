@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Itinerary, Destination } from '@/types/travel';
 import { MAPBOX_STYLES } from '@/components/Map';
+import { itinerary, destinations, dayItineraries } from '@/data/itinerary';
 import { Plus, MapPin, BarChart3 } from 'lucide-react';
 
 // Dynamically import TravelMap component to avoid SSR issues with Mapbox
@@ -18,130 +19,7 @@ const TravelMap = dynamic(() => import('@/components/Map'), {
   loading: () => <div className="h-96 w-full bg-gray-200 rounded-lg animate-pulse" />
 });
 
-// Sample data for demonstration
-const sampleDestinations: Destination[] = [
-  {
-    id: '1',
-    name: 'Skopje',
-    description: 'Capitale de la Macédoine du Nord',
-    coordinates: { lat: 41.9981, lng: 21.4254 },
-    address: 'Skopje, Macédoine du Nord',
-    category: 'city'
-  },
-  {
-    id: '2',
-    name: 'Istanbul',
-    description: 'Métropole entre Europe et Asie',
-    coordinates: { lat: 41.0082, lng: 28.9784 },
-    address: 'Istanbul, Turquie',
-    category: 'city'
-  },
-  {
-    id: '3',
-    name: 'Ankara',
-    description: 'Capitale de la Turquie',
-    coordinates: { lat: 39.9334, lng: 32.8597 },
-    address: 'Ankara, Turquie',
-    category: 'city'
-  }
-];
-
-const sampleDayItineraries: DayItinerary[] = [
-  {
-    date: '2024-07-15',
-    destination: sampleDestinations[0], // Skopje
-    activities: [
-      {
-        id: '1',
-        title: 'Visite du Vieux Bazar',
-        description: 'Découverte du marché traditionnel',
-        destinationId: '1',
-        startTime: '10:00',
-        endTime: '12:00',
-        category: 'sightseeing'
-      },
-      {
-        id: '2',
-        title: 'Musée de Macédoine',
-        description: 'Histoire et culture macédonienne',
-        destinationId: '1',
-        startTime: '14:00',
-        endTime: '16:00',
-        category: 'museum'
-      }
-    ],
-    notes: 'Arrivée en ville, installation à l\'hôtel',
-    order: 1
-  },
-  {
-    date: '2024-07-16',
-    destination: sampleDestinations[1], // Istanbul
-    activities: [
-      {
-        id: '3',
-        title: 'Visite de Sainte-Sophie',
-        description: 'Chef-d\'œuvre byzantin',
-        destinationId: '2',
-        startTime: '09:00',
-        endTime: '11:00',
-        category: 'sightseeing'
-      },
-      {
-        id: '4',
-        title: 'Bosphore en bateau',
-        description: 'Croisière sur le détroit',
-        destinationId: '2',
-        startTime: '15:00',
-        endTime: '17:00',
-        category: 'sightseeing'
-      }
-    ],
-    notes: 'Voyage en bus depuis Skopje (environ 8h)',
-    order: 2
-  },
-  {
-    date: '2024-07-17',
-    destination: sampleDestinations[2], // Ankara
-    activities: [
-      {
-        id: '5',
-        title: 'Musée des Civilisations Anatoliennes',
-        description: 'Histoire ancienne de l\'Anatolie',
-        destinationId: '3',
-        startTime: '10:00',
-        endTime: '13:00',
-        category: 'museum'
-      },
-      {
-        id: '6',
-        title: 'Citadelle d\'Ankara',
-        description: 'Vue panoramique sur la ville',
-        destinationId: '3',
-        startTime: '15:00',
-        endTime: '17:00',
-        category: 'sightseeing'
-      }
-    ],
-    notes: 'Voyage en train depuis Istanbul (environ 4h)',
-    order: 3
-  }
-];
-
-const sampleItineraries: Itinerary[] = [
-  {
-    id: '1',
-    title: 'Balkans Express',
-    description: 'Voyage découverte des Balkans et Turquie',
-    startDate: '2024-07-15',
-    endDate: '2024-07-17',
-    destinations: sampleDestinations,
-    days: sampleDayItineraries,
-    totalBudget: 1800,
-    currency: 'EUR',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  }
-];
+// Import des données depuis le fichier dédié
 
 export default function Home() {
   const [mapStyle, setMapStyle] = useState(MAPBOX_STYLES.streets);
@@ -161,11 +39,11 @@ export default function Home() {
           {/* Titre de l'itinéraire */}
           <Card className="bg-white/80 backdrop-blur-md border border-white/20 shadow-lg">
             <div className="p-4">
-              <h3 className="text-lg font-semibold text-black mb-2">{sampleItineraries[0].title}</h3>
-              <p className="text-sm text-gray-600 mb-3">{sampleItineraries[0].description}</p>
+              <h3 className="text-lg font-semibold text-black mb-2">{itinerary.title}</h3>
+              <p className="text-sm text-gray-600 mb-3">{itinerary.description}</p>
               <div className="flex items-center gap-4 text-xs text-gray-500">
-                <span>📅 {new Date(sampleItineraries[0].startDate).toLocaleDateString('fr-FR')} - {new Date(sampleItineraries[0].endDate).toLocaleDateString('fr-FR')}</span>
-                <span>💰 {sampleItineraries[0].totalBudget} {sampleItineraries[0].currency}</span>
+                <span>📅 {new Date(itinerary.startDate).toLocaleDateString('fr-FR')} - {new Date(itinerary.endDate).toLocaleDateString('fr-FR')}</span>
+                <span>💰 {itinerary.totalBudget} {itinerary.currency}</span>
               </div>
             </div>
           </Card>
@@ -173,9 +51,9 @@ export default function Home() {
           {/* Étapes de l'itinéraire */}
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-black flex items-center gap-2">
-              🗺️ Étapes ({sampleDayItineraries.length})
+              🗺️ Étapes ({dayItineraries.length})
             </h3>
-            {sampleDayItineraries.map((day, index) => (
+            {dayItineraries.map((day, index) => (
               <Card key={day.date} className="bg-white/80 backdrop-blur-md border border-white/20 shadow-lg">
                 <div className="p-4">
                   {/* En-tête du jour */}
@@ -249,7 +127,7 @@ export default function Home() {
       {/* Carte - Plein écran droite */}
       <div className="flex-1 relative">
         <TravelMap
-          destinations={sampleDestinations}
+          destinations={destinations}
           center={[41.0082, 28.9784]} // Istanbul coordinates (centre du voyage)
           zoom={6}
           className="h-full w-full"
