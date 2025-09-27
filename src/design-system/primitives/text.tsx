@@ -159,7 +159,7 @@ const semanticTextVariants = cva('', {
 });
 
 export interface TextProps
-  extends React.HTMLAttributes<HTMLSpanElement>,
+  extends Omit<React.HTMLAttributes<HTMLSpanElement>, 'color'>,
     VariantProps<typeof textVariants>,
     VariantProps<typeof semanticTextVariants> {
   asChild?: boolean;

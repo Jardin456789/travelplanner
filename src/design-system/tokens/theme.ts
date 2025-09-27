@@ -216,7 +216,7 @@ export const darkTheme = {
 } as const;
 
 // Theme type
-export type ThemeConfig = typeof lightTheme;
+export type ThemeConfig = Record<keyof typeof lightTheme, string>;
 export type ThemeName = 'light' | 'dark';
 
 // Get theme configuration by name
