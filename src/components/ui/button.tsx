@@ -5,26 +5,32 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all duration-200 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90",
+        default: "bg-primary text-primary-foreground hover:bg-primary-hover focus-visible:ring-primary shadow-sm hover:shadow-md",
         destructive:
-          "bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
+          "bg-error text-white hover:bg-error-hover focus-visible:ring-error shadow-sm hover:shadow-md",
         outline:
-          "border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50",
+          "border border-border bg-background hover:bg-accent hover:text-accent-foreground focus-visible:ring-primary shadow-sm hover:shadow-md",
         secondary:
-          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+          "bg-secondary text-secondary-foreground hover:bg-secondary-hover focus-visible:ring-secondary shadow-sm hover:shadow-md",
         ghost:
-          "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
-        link: "text-primary underline-offset-4 hover:underline",
+          "hover:bg-accent hover:text-accent-foreground focus-visible:ring-accent",
+        link: "text-primary underline-offset-4 hover:underline focus-visible:ring-primary",
+        success: "bg-success text-white hover:bg-success-hover focus-visible:ring-success shadow-sm hover:shadow-md",
+        warning: "bg-warning text-white hover:bg-warning-hover focus-visible:ring-warning shadow-sm hover:shadow-md",
       },
       size: {
-        default: "h-9 px-4 py-2 has-[>svg]:px-3",
-        sm: "h-8 rounded-md gap-1.5 px-3 has-[>svg]:px-2.5",
-        lg: "h-10 rounded-md px-6 has-[>svg]:px-4",
+        xs: "h-7 px-2 text-xs gap-1.5 has-[>svg]:px-1.5",
+        sm: "h-8 px-3 text-sm gap-1.5 has-[>svg]:px-2.5",
+        default: "h-9 px-4 py-2 text-sm has-[>svg]:px-3",
+        lg: "h-10 px-6 text-base has-[>svg]:px-4",
+        xl: "h-12 px-8 text-lg has-[>svg]:px-5",
         icon: "size-9",
+        "icon-sm": "size-7",
+        "icon-lg": "size-11",
       },
     },
     defaultVariants: {

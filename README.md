@@ -1,104 +1,104 @@
 # 🗺️ TravelPlanner
 
-Une application de planification de voyages avec cartes interactives, construite avec Next.js, TypeScript et Mapbox.
+Application de planification d'itinéraires avec carte interactive, Next.js 15, React 19 et TypeScript. Design System interne (tokens, primitives) et données d'itinéraires prêtes à l'emploi.
+
+## ⚙️ Prérequis
+
+- Node.js ≥ 20.19 (LTS conseillé). Avec `nvm` :
+
+```bash
+nvm use 20
+```
 
 ## 🚀 Démarrage rapide
 
-### 1. Installation des dépendances
+1) Installer les dépendances
 
 ```bash
 npm install
 ```
 
-### 2. Configuration de Mapbox
-
-1. Créez un compte gratuit sur [mapbox.com](https://account.mapbox.com/)
-2. Générez une clé API dans la section "Access tokens"
-3. Créez un fichier `.env.local` à la racine du projet :
+2) Configurer Mapbox
 
 ```env
-NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN=votre_clé_api_mapbox_ici
+# .env.local
+NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN=votre_cle_api_mapbox
 ```
 
-**Note :** Si vous ne configurez pas de token, l'application utilisera automatiquement un token de démonstration Mapbox (50k vues/mois gratuites).
+Sans token, un token de démo est utilisé (limite ~50k vues/mois).
 
-### 3. Lancer le serveur de développement
+3) Lancer le serveur de dev
 
 ```bash
 npm run dev
 ```
 
-Ouvrez [http://localhost:3000](http://localhost:3000) pour voir l'application.
+Ouvrir http://localhost:3000
 
-## 🛠️ Technologies utilisées
+## 📦 Scripts utiles
 
-- **Next.js 15** - Framework React avec App Router
-- **TypeScript** - Typage statique
-- **Tailwind CSS** - Framework CSS utilitaire
-- **Mapbox GL JS** - Cartes interactives
-- **React Map GL** - Composants React pour Mapbox
-- **React Hook Form** - Gestion des formulaires
-- **Zod** - Validation des données
-- **Lucide React** - Icônes
+- Dev: `npm run dev`
+- Build: `npm run build`
+- Start: `npm run start`
+- Lint JS/TS: `npm run lint`
+- Lint CSS: `npm run lint:css`
+- Tests (Vitest): `npm run test` | `npm run test:run` | `npm run test:ui` | `npm run test:coverage`
 
-## 🎨 Personnalisation des cartes
+## 🧭 Carte et données
 
-### Styles prédéfinis Mapbox
+- Carte: `src/components/Map.tsx` (Mapbox via `react-map-gl`). Styles changeables dynamiquement.
+- Données d'itinéraire: `src/data/itinerary.ts` et autres fichiers dans `src/data/**` (ex: Europe, Balkans...).
+- Types: `src/types/travel.ts` (destinations, jours, transports...).
 
-L'application inclut **8 styles de carte prédéfinis** que vous pouvez changer en temps réel :
+## 🎨 Design System
 
-- **🗺️ Streets** - Carte routière classique
-- **🛰️ Satellite** - Vue satellite pure
-- **🛰️ Satellite + Streets** - Satellite avec noms de rues
-- **🏔️ Outdoors** - Optimisé pour les activités extérieures
-- **☀️ Light** - Thème clair minimaliste
-- **🌙 Dark** - Thème sombre élégant
-- **🚗 Navigation (Jour)** - Optimisé pour la conduite de jour
-- **🚗 Navigation (Nuit)** - Optimisé pour la conduite de nuit
+- Provider: `src/design-system/providers/design-system-provider.tsx` (déjà utilisé dans `src/app/layout.tsx`).
+- Tokens: `src/design-system/tokens/**` (couleurs OKLCH, typo, espacements...).
+- Primitives: `src/design-system/primitives/**` (Text, Stack, etc.).
+- Composants DS: `src/design-system/components/**` (ex: `app-header.tsx`, `theme-selector.tsx`).
+- UI locaux (shadcn-like): `src/components/ui/**` (`button.tsx`, `badge.tsx`, `card.tsx`, `separator.tsx`).
 
-### Styles personnalisés avancés
+Astuce: tu peux consommer ces composants directement dans `src/app/page.tsx` (déjà fait pour `Button`, `AppHeader`, `ThemeSelector`).
 
-Pour créer vos propres styles, utilisez [Mapbox Studio](https://studio.mapbox.com/) :
+## 🧹 Qualité & Tests
 
-1. Connectez-vous à votre compte Mapbox
-2. Créez un nouveau style ou dupliquez un style existant
-3. Personnalisez les couleurs, polices, icônes
-4. Publiez votre style et récupérez l'URL
-5. Utilisez l'URL dans votre application
+- ESLint 9 + config Next: `npm run lint` (corriger les warnings des hooks et types quand signalés).
+- Stylelint (Tailwind v4): `npm run lint:css`.
+- Vitest: `npm run test` (unitaires), `npm run test:ui`, `npm run test:coverage`.
 
-```typescript
-// Exemple d'utilisation d'un style personnalisé
-const customStyle = 'mapbox://styles/votre-compte/votre-style-id';
-<TravelMap mapStyle={customStyle} />
-```
-
-## 📁 Structure du projet
+## 🗂️ Structure
 
 ```
 src/
-├── app/                    # Pages Next.js (App Router)
-│   ├── page.tsx           # Page d'accueil
-│   ├── layout.tsx         # Layout principal
-│   └── globals.css        # Styles globaux
-├── components/            # Composants React réutilisables
-│   ├── Map.tsx           # Carte interactive Mapbox
-│   └── ItineraryCard.tsx # Carte d'itinéraire
-├── types/                # Types TypeScript
-│   └── travel.ts         # Types pour les voyages
-└── lib/                  # Utilitaires
+├─ app/                 # App Router Next.js
+│  ├─ page.tsx          # Page principale (carte + étapes)
+│  ├─ layout.tsx        # Layout avec DesignSystemProvider
+│  └─ globals.css       # Thème + tokens CSS (Tailwind v4)
+├─ components/
+│  ├─ Map.tsx           # Carte Mapbox (react-map-gl)
+│  ├─ ItineraryCard.tsx # UI d'une étape
+│  └─ ui/               # Boutons, Badge, Card, Separator
+├─ design-system/       # DS interne (tokens/primitives/composants)
+├─ data/                # Itinéraires/destinations
+├─ hooks/               # Hooks (groupes de destinations, segments)
+├─ lib/                 # Utilitaires (dates, carte, helpers)
+└─ types/               # Types TS (travel)
 ```
 
-## Learn More
+## 🔧 Dépannage (FAQ)
 
-To learn more about Next.js, take a look at the following resources:
+- Carte blanche/erreur Mapbox: vérifier le token dans `.env.local` et la variable `NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN`.
+- Warnings Tailwind/Stylelint sur OKLCH/deg: ce sont des règles strictes; tu peux lancer `npm run lint:css -- --fix` et/ou ajuster `.stylelintrc.json` si besoin.
+- Icônes/images: privilégier `next/image` (déjà fait) pour de meilleures perfs.
+- Storybook (optionnel): non requis. Si tu souhaites l'utiliser plus tard avec `@storybook/nextjs-vite`, utilise Node ≥ 20.19 et aligne les versions Storybook.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 📝 Contribution
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. Créer une branche
+2. Commits clairs
+3. `npm run lint` / `npm run test`
+4. PR
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Bon voyage et bon dev ✈️

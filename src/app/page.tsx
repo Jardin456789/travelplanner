@@ -5,9 +5,11 @@ import { formatDate, useCurrentDate } from '@/lib/date-utils';
 import { ChevronDown, ChevronUp, Calendar } from 'lucide-react';
 import { parseISO, isBefore, isEqual } from 'date-fns';
 import dynamic from 'next/dynamic';
+import Image from 'next/image';
 import ItineraryCard from '@/components/ItineraryCard';
 import MapStyleSelector from '@/components/MapStyleSelector';
 import { Button } from '@/components/ui/button';
+import { AppHeader, ThemeSelector } from '@/design-system/components';
 import { Destination, DayItinerary } from '@/types/travel';
 import { MAPBOX_STYLES } from '@/components/Map';
 import { itinerary, destinations, dayItineraries } from '@/data/itinerary';
@@ -50,7 +52,7 @@ export default function Home() {
         dayDate.setHours(0, 0, 0, 0);
         return isEqual(dayDate, clientCurrentDate) || isBefore(dayDate, clientCurrentDate);
       });
-  }, [clientCurrentDate, dayItineraries]);
+  }, [clientCurrentDate]);
 
   // Fonction pour grouper les étapes consécutives dans la même destination
   const groupConsecutiveSteps = (days: DayItinerary[]): StepGroup[] => {
@@ -157,7 +159,7 @@ export default function Home() {
   // Liste aplatie de toutes les étapes pour la navigation mobile
   const allSteps = useMemo(() => {
     return dayItineraries.sort((a, b) => a.order - b.order);
-  }, [dayItineraries]);
+  }, []);
 
   // Étapes filtrées par mois pour mobile
   const mobileFilteredSteps = useMemo(() => {
@@ -181,7 +183,7 @@ export default function Home() {
   }, [currentStep, mobileFilteredSteps]);
 
   // Fonctions de navigation mobile
-  const goToNextStep = () => {
+  const goToNextStep = useCallback(() => {
     if (currentMobileStepIndex < mobileFilteredSteps.length - 1) {
       setUpdateSource('mobile');
       setCurrentMobileStepIndex(prev => prev + 1);
@@ -191,9 +193,9 @@ export default function Home() {
         setSelectedStep(nextStep);
       }
     }
-  };
+  }, [currentMobileStepIndex, mobileFilteredSteps]);
 
-  const goToPreviousStep = () => {
+  const goToPreviousStep = useCallback(() => {
     if (currentMobileStepIndex > 0) {
       setUpdateSource('mobile');
       setCurrentMobileStepIndex(prev => prev - 1);
@@ -203,7 +205,7 @@ export default function Home() {
         setSelectedStep(prevStep);
       }
     }
-  };
+  }, [currentMobileStepIndex, mobileFilteredSteps]);
 
   // Fonctions pour le swipe
   const minSwipeDistance = 50;
@@ -396,9 +398,11 @@ export default function Home() {
                         <div key={`gif-${index}`} className="flex flex-col items-center mx-0.5">
                           {index === currentDateStepIndex && currentDateStepIndex !== -1 && (
                             <div className="w-3 h-3 rounded-full bg-white border border-gray-300 flex items-center justify-center mb-1">
-                              <img
+                              <Image
                                 src="/current-step.gif"
                                 alt="Étape actuelle"
+                                width={8}
+                                height={8}
                                 className="w-2 h-2 object-contain"
                               />
                             </div>
@@ -448,13 +452,12 @@ export default function Home() {
         {/* Contenu du panel */}
         <div className="flex-1 p-4 space-y-4 overflow-y-auto">
           {/* Titre de l'itinéraire */}
-          <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
-            <h3 className="text-base font-semibold text-gray-900 mb-1">{itinerary.title}</h3>
-            <p className="text-xs text-gray-600 mb-2">{itinerary.description}</p>
-            <div className="text-xs text-gray-500">
-              📅 {formatDate(itinerary.startDate)} - {formatDate(itinerary.endDate)}
-            </div>
-          </div>
+          <AppHeader
+            title={itinerary.title}
+            description={itinerary.description}
+            startDate={formatDate(itinerary.startDate)}
+            endDate={formatDate(itinerary.endDate)}
+          />
 
           {/* Étapes de l'itinéraire */}
           <div ref={stepsContainerRef} className="space-y-3">
@@ -619,12 +622,15 @@ export default function Home() {
           </div>
 
           {/* Boutons d'action en bas */}
-          <div className="space-y-2 pt-2">
-            <Button className="w-full bg-gray-900 hover:bg-gray-800 text-white border-0 h-8 text-sm">
+          <div className="space-y-3 pt-2">
+            <div className="flex justify-center">
+              <ThemeSelector />
+            </div>
+            <Button className="w-full h-8 text-sm">
               <Plus className="w-3 h-3 mr-2" />
               Modifier
             </Button>
-            <Button variant="outline" className="w-full border-gray-300 text-gray-700 hover:bg-gray-50 h-8 text-sm">
+            <Button variant="outline" className="w-full h-8 text-sm">
               Exporter PDF
             </Button>
           </div>

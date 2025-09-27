@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
-import { parseISO, isBefore, isEqual } from 'date-fns';
+import { parseISO } from 'date-fns';
 import Map, { Popup, NavigationControl, ScaleControl, MapRef, Marker } from 'react-map-gl';
 import type { MapMouseEvent } from 'mapbox-gl';
+import Image from 'next/image';
 import { Destination, DayItinerary } from '@/types/travel';
 import { calculateOptimalView } from '@/lib/map-utils';
 import { useDestinationGroups } from '@/hooks/useDestinationGroups';
@@ -304,9 +305,11 @@ export default function TravelMap({
             style={{ zIndex: 10 }}
           >
             <div className="w-16 h-16 rounded-full bg-white border-4 border-gray-300 flex items-center justify-center shadow-lg pointer-events-none">
-              <img
+              <Image
                 src="/current-step.gif"
                 alt="Étape actuelle"
+                width={56}
+                height={56}
                 className="w-14 h-14 object-cover rounded-full"
               />
             </div>
