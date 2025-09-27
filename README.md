@@ -92,6 +92,10 @@ src/
 - Icônes/images: privilégier `next/image` (déjà fait) pour de meilleures perfs.
 - Storybook (optionnel): non requis. Si tu souhaites l'utiliser plus tard avec `@storybook/nextjs-vite`, utilise Node ≥ 20.19 et aligne les versions Storybook.
 
+## 📄 Licence
+
+Ce projet est sous licence MIT - voir le fichier [LICENSE](LICENSE) pour plus de détails.
+
 ## 📝 Contribution
 
 1. Créer une branche
