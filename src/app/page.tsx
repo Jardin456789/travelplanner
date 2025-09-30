@@ -12,8 +12,8 @@ import { Button } from '@/components/ui/button';
 import { AppHeader, ThemeSelector } from '@/design-system/components';
 import { Destination, DayItinerary } from '@/types/travel';
 import { MAPBOX_STYLES } from '@/components/Map';
-import { itinerary, destinations, dayItineraries } from '@/data/itinerary';
 import { Plus } from 'lucide-react';
+import { useTravelData } from '@/hooks/useTravelData';
 
 // Type pour représenter une étape ou un groupe d'étapes consécutives
 type StepGroup = {
@@ -36,6 +36,11 @@ const TravelMap = dynamic(() => import('@/components/Map'), {
 // Import des données depuis le fichier dédié
 
 export default function Home() {
+  const { loading, destinations, dayItineraries, itinerary } = useTravelData();
+  const sortedDayItineraries = useMemo(() => {
+    return [...dayItineraries].sort((a, b) => a.order - b.order);
+  }, [dayItineraries]);
+
   const [mapStyle, setMapStyle] = useState<string>(MAPBOX_STYLES.satelliteStreets);
   const stepsContainerRef = useRef<HTMLDivElement>(null);
 
@@ -44,15 +49,14 @@ export default function Home() {
 
   // Déterminer l'étape actuelle basée sur la date côté client
   const currentStep = useMemo(() => {
-    // Trier par ordre et prendre la plus récente qui est aujourd'hui ou avant
-    return dayItineraries
-      .sort((a, b) => b.order - a.order) // Inverser pour avoir la plus récente en premier
+    return [...sortedDayItineraries]
+      .reverse()
       .find(day => {
         const dayDate = parseISO(day.date);
         dayDate.setHours(0, 0, 0, 0);
         return isEqual(dayDate, clientCurrentDate) || isBefore(dayDate, clientCurrentDate);
       });
-  }, [clientCurrentDate]);
+  }, [clientCurrentDate, sortedDayItineraries]);
 
   // Fonction pour grouper les étapes consécutives dans la même destination
   const groupConsecutiveSteps = (days: DayItinerary[]): StepGroup[] => {
@@ -110,7 +114,7 @@ export default function Home() {
   // Grouper les étapes par mois avec regroupement des séjours consécutifs
   const groupedByMonth = (() => {
     // D'abord grouper par mois les étapes individuelles
-    const monthGroups = dayItineraries.reduce((acc, day) => {
+    const monthGroups = sortedDayItineraries.reduce((acc, day) => {
       const date = new Date(day.date);
       const monthKey = date.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }).toLowerCase().replace(' ', '-');
       if (!acc[monthKey]) {
@@ -124,8 +128,8 @@ export default function Home() {
     const finalGroups: Record<string, StepGroup[]> = {};
     Object.entries(monthGroups).forEach(([monthKey, days]) => {
       // Trier les jours par ordre
-      days.sort((a, b) => a.order - b.order);
-      finalGroups[monthKey] = groupConsecutiveSteps(days);
+      const orderedDays = [...days].sort((a, b) => a.order - b.order);
+      finalGroups[monthKey] = groupConsecutiveSteps(orderedDays);
     });
 
     return finalGroups;
@@ -157,9 +161,7 @@ export default function Home() {
   const [updateSource, setUpdateSource] = useState<'mobile' | 'map' | null>(null);
 
   // Liste aplatie de toutes les étapes pour la navigation mobile
-  const allSteps = useMemo(() => {
-    return dayItineraries.sort((a, b) => a.order - b.order);
-  }, []);
+  const allSteps = sortedDayItineraries;
 
   // Étapes filtrées par mois pour mobile
   const mobileFilteredSteps = useMemo(() => {
@@ -280,6 +282,30 @@ export default function Home() {
     }
   }, [updateSource]);
 
+  useEffect(() => {
+    if (currentStep && !selectedStep) {
+      setSelectedStep(currentStep);
+    }
+  }, [currentStep, selectedStep]);
+
+  useEffect(() => {
+    if (!currentStep) return;
+    const currentDate = new Date(currentStep.date);
+    const currentMonthKey = currentDate
+      .toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })
+      .toLowerCase()
+      .replace(' ', '-');
+
+    setExpandedMonths((prev) => {
+      if (prev.has(currentMonthKey)) {
+        return prev;
+      }
+      const next = new Set(prev);
+      next.add(currentMonthKey);
+      return next;
+    });
+  }, [currentStep]);
+
   // Scroll automatique vers l'étape sélectionnée quand on clique sur la carte
   useEffect(() => {
     if (selectedStep && stepsContainerRef.current) {
@@ -296,13 +322,21 @@ export default function Home() {
     }
   }, [selectedStep]);
 
+  if (loading || !itinerary || sortedDayItineraries.length === 0) {
+    return (
+      <div className="h-screen w-full flex items-center justify-center bg-white text-gray-600">
+        Chargement de l’itinéraire en cours...
+      </div>
+    );
+  }
+
   return (
     <div className="h-screen flex flex-col lg:flex-row">
       {/* Carte - Plein écran sur mobile, droite sur desktop */}
       <div className="flex-1 relative order-1 lg:order-2">
         <TravelMap
           destinations={destinations}
-          dayItineraries={dayItineraries}
+          dayItineraries={sortedDayItineraries}
           className="h-full w-full"
           mapStyle={mapStyle}
           onStyleChange={(style) => setMapStyle(style)}

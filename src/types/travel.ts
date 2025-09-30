@@ -33,6 +33,20 @@ export interface TransportSegment {
   duration?: string; // e.g. "8h", "2h 30m"
   distance?: string; // e.g. "500km"
   notes?: string;
+  routeType?: string; // Type de route/piste pour le vélo
+  difficulty?: string; // Difficulté du trajet
+  pointsOfInterest?: string; // Points d'intérêt sur le trajet
+  networkAndWater?: string; // Informations sur réseau et eau
+}
+
+export interface BikeSegmentDetails {
+  trajet: string;
+  distance_km: number;
+  route: string;
+  difficulte: string;
+  points_interet: string[];
+  reseau_eau: string;
+  coordonnees: Record<string, [number, number]>;
 }
 
 export interface DayItinerary {
@@ -42,6 +56,7 @@ export interface DayItinerary {
   notes?: string;
   order: number; // Ordre dans l'itinéraire
   transportToNext?: TransportSegment; // Transport vers l'étape suivante
+  bikeSegment?: BikeSegmentDetails; // Détails spécifiques aux étapes vélo
 }
 
 export interface Itinerary {

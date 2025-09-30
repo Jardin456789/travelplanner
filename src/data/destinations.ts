@@ -188,6 +188,78 @@ export const destinations: Destination[] = [
     address: 'Frontière Chine-Vietnam',
     category: 'border'
   },
+  {
+    id: '24',
+    name: 'Leshan',
+    description: 'Ville du Sichuan célèbre pour son Grand Bouddha taillé dans la falaise',
+    coordinates: { lat: 29.5522, lng: 103.7658 },
+    address: 'Leshan, Sichuan, Chine',
+    category: 'city'
+  },
+  {
+    id: '25',
+    name: 'Yibin',
+    description: 'Ville aux confluents du Yangtze et berceau du thé noir',
+    coordinates: { lat: 28.7513, lng: 104.6240 },
+    address: 'Yibin, Sichuan, Chine',
+    category: 'city'
+  },
+  {
+    id: '26',
+    name: 'Xichang',
+    description: 'Ville de l\'Anning, porte du plateau Liangshan',
+    coordinates: { lat: 27.8816, lng: 102.2670 },
+    address: 'Xichang, Sichuan, Chine',
+    category: 'city'
+  },
+  {
+    id: '27',
+    name: 'Lac Lugu',
+    description: 'Lac d\'altitude turquoise aux villages Mosuo',
+    coordinates: { lat: 27.7010, lng: 100.7990 },
+    address: 'Lago Lugu, Yunnan, Chine',
+    category: 'nature'
+  },
+  {
+    id: '28',
+    name: 'Lijiang',
+    description: 'Vieille ville Naxi classée UNESCO au pied du Jade Dragon',
+    coordinates: { lat: 26.8721, lng: 100.2330 },
+    address: 'Lijiang, Yunnan, Chine',
+    category: 'city'
+  },
+  {
+    id: '29',
+    name: 'Dali',
+    description: 'Ville historique sur les rives du lac Erhai',
+    coordinates: { lat: 25.6930, lng: 100.1620 },
+    address: 'Dali, Yunnan, Chine',
+    category: 'city'
+  },
+  {
+    id: '30',
+    name: 'Chuxiong',
+    description: 'Ville étape sur l\'ancienne route du thé et des chevaux',
+    coordinates: { lat: 25.0450, lng: 101.5460 },
+    address: 'Chuxiong, Yunnan, Chine',
+    category: 'city'
+  },
+  {
+    id: '31',
+    name: 'Jianshui',
+    description: 'Ville historique avec villages Hani et ponts anciens',
+    coordinates: { lat: 23.6110, lng: 102.8270 },
+    address: 'Jianshui, Yunnan, Chine',
+    category: 'city'
+  },
+  {
+    id: '61',
+    name: 'Yuanyang - Rizières en terrasses',
+    description: 'Terrasses Hani spectaculaires dominant la vallée de Honghe',
+    coordinates: { lat: 23.1020, lng: 102.7500 },
+    address: 'Yuanyang, Yunnan, Chine',
+    category: 'nature'
+  },
   // === CHINE CÔTIÈRE - RETOUR ===
   {
     id: '32',
@@ -285,5 +357,142 @@ export const destinations: Destination[] = [
     coordinates: { lat: 37.5665, lng: 126.9780 },
     address: 'Séoul, Corée du Sud',
     category: 'city'
+  },
+  // === KAZAKHSTAN - SEGMENTS VÉLO ===
+  {
+    id: '44',
+    name: 'Camp Mangystau J1',
+    description: 'Campement intermédiaire entre Aktau et Shetpe',
+    coordinates: { lat: 44.0, lng: 51.6 },
+    address: 'Plateau du Mangystau, Kazakhstan',
+    category: 'nature'
+  },
+  {
+    id: '45',
+    name: 'Shetpe',
+    description: 'Ville de transit au cœur du Mangystau',
+    coordinates: { lat: 44.16667, lng: 52.11667 },
+    address: 'Shetpe, Mangystau, Kazakhstan',
+    category: 'city'
+  },
+  {
+    id: '46',
+    name: 'Mosquée Shakpak Ata',
+    description: 'Mosquée souterraine creusée dans la falaise',
+    coordinates: { lat: 44.221, lng: 52.145 },
+    address: 'Shakpak Ata, Mangystau, Kazakhstan',
+    category: 'cultural'
+  },
+  {
+    id: '47',
+    name: 'Torysh - Vallée des boules',
+    description: 'Paysage de sphères rocheuses uniques',
+    coordinates: { lat: 44.3236, lng: 51.5986 },
+    address: 'Torysh, Mangystau, Kazakhstan',
+    category: 'nature'
+  },
+  {
+    id: '48',
+    name: 'Camp Mangystau J2',
+    description: 'Segment intermédiaire entre Shetpe et Zhanaozen',
+    coordinates: { lat: 43.8, lng: 52.5 },
+    address: 'Plateau du Mangystau, Kazakhstan',
+    category: 'nature'
+  },
+  {
+    id: '49',
+    name: 'Zhanaozen',
+    description: 'Ville pétrolière au sud du Mangystau',
+    coordinates: { lat: 43.34116, lng: 52.86192 },
+    address: 'Zhanaozen, Mangystau, Kazakhstan',
+    category: 'city'
+  },
+  {
+    id: '50',
+    name: 'Karagiye Depression',
+    description: 'Dépression salée spectaculaire du Mangystau',
+    coordinates: { lat: 43.4, lng: 51.79 },
+    address: 'Karagiye, Kazakhstan',
+    category: 'nature'
+  },
+  {
+    id: '51',
+    name: 'Approche Charyn Canyon',
+    description: 'Campement sur la route d\'Almaty vers Charyn',
+    coordinates: { lat: 43.3, lng: 78.6 },
+    address: 'Route d\'Almaty au canyon de Charyn, Kazakhstan',
+    category: 'nature'
+  },
+  {
+    id: '52',
+    name: 'Charyn Canyon',
+    description: 'Canyon emblématique du sud-est du Kazakhstan',
+    coordinates: { lat: 43.3547892, lng: 79.0619113 },
+    address: 'Charyn Canyon, Kazakhstan',
+    category: 'nature'
+  },
+  {
+    id: '53',
+    name: 'Plateau retour Charyn',
+    description: 'Campement sur la route retour du canyon de Charyn',
+    coordinates: { lat: 43.35, lng: 78.8 },
+    address: 'Plateau de Charyn, Kazakhstan',
+    category: 'nature'
+  },
+  {
+    id: '54',
+    name: 'Vallée de l\'Ili - Village 1',
+    description: 'Village traditionnel dans la vallée de l\'Ili',
+    coordinates: { lat: 44.0, lng: 77.2 },
+    address: 'Vallée de l\'Ili, Kazakhstan',
+    category: 'nature'
+  },
+  {
+    id: '55',
+    name: 'Vallée de l\'Ili - Village 2',
+    description: 'Point de vue sur la rivière Ili',
+    coordinates: { lat: 44.3, lng: 77.0 },
+    address: 'Vallée de l\'Ili, Kazakhstan',
+    category: 'nature'
+  },
+  {
+    id: '56',
+    name: 'Altyn-Emel - Entrée du parc',
+    description: 'Entrée principale du parc national Altyn-Emel',
+    coordinates: { lat: 44.2, lng: 78.26 },
+    address: 'Altyn-Emel, Kazakhstan',
+    category: 'nature'
+  },
+  {
+    id: '57',
+    name: 'Altyn-Emel - Dunes chantantes',
+    description: 'Dunes iconiques du parc national Altyn-Emel',
+    coordinates: { lat: 44.18, lng: 78.36 },
+    address: 'Altyn-Emel, Kazakhstan',
+    category: 'nature'
+  },
+  {
+    id: '58',
+    name: 'Altyn-Emel - Camp retour',
+    description: 'Campement de sortie du parc d\'Altyn-Emel',
+    coordinates: { lat: 44.05, lng: 78.1 },
+    address: 'Altyn-Emel, Kazakhstan',
+    category: 'nature'
+  },
+  {
+    id: '59',
+    name: 'Camp Steppe vers Khorgos',
+    description: 'Camp intermédiaire entre Almaty et la frontière de Khorgos',
+    coordinates: { lat: 44.6, lng: 80.0 },
+    address: 'Steppe d\'Almaty, Kazakhstan',
+    category: 'nature'
+  },
+  {
+    id: '60',
+    name: 'Poste frontalier de Khorgos',
+    description: 'Point de passage principal vers la Chine',
+    coordinates: { lat: 44.2, lng: 80.0 },
+    address: 'Khorgos, Kazakhstan',
+    category: 'border'
   }
 ];

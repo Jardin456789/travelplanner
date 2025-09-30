@@ -259,8 +259,12 @@ export const turkeyDayItineraries: DayItinerary[] = [
     transportToNext: {
       type: 'bike',
       duration: '5h',
-      distance: '120km',
-      notes: 'Début du bikepacking vers Atyrau'
+      distance: '75km',
+      notes: 'Début du bikepacking vers le camp Mangystau J1',
+      routeType: 'route goudronnée',
+      difficulty: 'facile',
+      pointsOfInterest: 'Plages Caspienne',
+      networkAndWater: 'Réseau bon, villages'
     }
   }
 ];

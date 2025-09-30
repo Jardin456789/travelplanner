@@ -1,730 +1,631 @@
 import { DayItinerary } from '@/types/travel';
 import { destinations } from './destinations';
 
+const getDestination = (id: string) => {
+  const destination = destinations.find((item) => item.id === id);
+  if (!destination) {
+    throw new Error(`Destination ${id} not found in destinations dataset`);
+  }
+  return destination;
+};
+
 export const kazakhstanDayItineraries: DayItinerary[] = [
-  // === KAZAKHSTAN - 20 jours vers la frontière chinoise ===
+  // === KAZAKHSTAN - SEGMENTS VÉLO DÉTAILLÉS ===
   {
     date: '2025-10-10',
-    destination: destinations[5], // Atyrau - Arrivée
+    destination: getDestination('44'), // Camp Mangystau J1
     activities: [
       {
-        id: '27',
-        title: 'Arrivée à Atyrau',
-        description: 'Installation dans la ville pétrolière sur la Caspienne',
-        destinationId: '6',
-        startTime: '15:00',
-        endTime: '17:00',
-        category: 'arrival'
+        id: 'kz-01',
+        title: 'Bikepacking Aktau → Shetpe (partie 1)',
+        description: 'Étape de mise en jambe sur la route goudronnée longeant la Caspienne.',
+        destinationId: '44',
+        startTime: '07:30',
+        endTime: '15:00',
+        category: 'bike'
       },
       {
-        id: '28',
-        title: 'Balade sur le front de mer',
-        description: 'Découverte du bord de Caspienne',
-        destinationId: '6',
-        startTime: '17:00',
-        endTime: '19:00',
-        category: 'sightseeing'
+        id: 'kz-01-camp',
+        title: 'Installation du camp Mangystau',
+        description: 'Montage du bivouac et hydratation près des falaises du plateau.',
+        destinationId: '44',
+        startTime: '15:30',
+        endTime: '17:30',
+        category: 'rest'
       }
     ],
-    notes: 'Arrivée à Atyrau après le bikepacking depuis Aktau',
+    notes: 'Première portion depuis Aktau, roulage fluide avant d\'attaquer les pistes du Mangystau.',
     order: 16,
-    transportToNext: {
-      type: 'rest',
-      duration: '1j',
-      distance: '0km',
-      notes: 'Exploration d\'Atyrau'
+    bikeSegment: {
+      trajet: 'Aktau → Shetpe (partie 1)',
+      distance_km: 75,
+      route: 'goudronnée',
+      difficulte: 'facile',
+      points_interet: ['Plages Caspienne'],
+      reseau_eau: 'réseau bon, villages',
+      coordonnees: {
+        depart_aktau: [43.64806, 51.17222],
+        arrivee_etape: [44.0, 51.6]
+      }
     }
   },
   {
     date: '2025-10-11',
-    destination: destinations[5], // Atyrau - Jour 2
+    destination: getDestination('45'), // Shetpe
     activities: [
       {
-        id: '29',
-        title: 'Musée régional d\'Atyrau',
-        description: 'Histoire et culture de la région caspienne',
-        destinationId: '6',
-        startTime: '10:00',
-        endTime: '12:00',
-        category: 'museum'
+        id: 'kz-02',
+        title: 'Bikepacking Aktau → Shetpe (partie 2)',
+        description: 'Montée progressive vers Shetpe avec passage près de Shakpak Ata.',
+        destinationId: '45',
+        startTime: '07:30',
+        endTime: '15:30',
+        category: 'bike'
       },
       {
-        id: '30',
-        title: 'Centre-ville moderne',
-        description: 'Architecture soviétique et pétrolière',
-        destinationId: '6',
-        startTime: '14:00',
-        endTime: '16:00',
-        category: 'sightseeing'
-      }
-    ],
-    notes: 'Découverte culturelle d\'Atyrau',
-    order: 17,
-    transportToNext: {
-      type: 'rest',
-      duration: '1j',
-      distance: '0km',
-      notes: 'Dernière journée à Atyrau'
-    }
-  },
-  {
-    date: '2025-10-12',
-    destination: destinations[5], // Atyrau - Préparation départ
-    activities: [
-      {
-        id: '31',
-        title: 'Préparation du train vers Aktobe',
-        description: 'Achats et préparatifs pour le trajet en train',
-        destinationId: '6',
-        startTime: '09:00',
-        endTime: '12:00',
+        id: 'kz-02-recup',
+        title: 'Ravitaillement à Shetpe',
+        description: 'Courses et check mécanique avant les boucles locales.',
+        destinationId: '45',
+        startTime: '16:00',
+        endTime: '18:00',
         category: 'preparation'
       }
     ],
-    notes: 'Préparation du départ en train vers Aktobe',
-    order: 18,
-    transportToNext: {
-      type: 'train',
-      duration: '12h',
-      distance: '850km',
-      notes: 'Train de nuit Atyrau-Aktobe'
+    notes: 'Fin du transfert depuis Aktau, arrivée à Shetpe et ravitaillement.',
+    order: 17,
+    bikeSegment: {
+      trajet: 'Aktau → Shetpe (partie 2)',
+      distance_km: 75,
+      route: 'goudronnée',
+      difficulte: 'modéré',
+      points_interet: ['Falaises Shakpak Ata'],
+      reseau_eau: 'réseau presque partout, villages',
+      coordonnees: {
+        depart_camp: [44.0, 51.6],
+        arrivee_shetpe: [44.16667, 52.11667]
+      }
     }
   },
   {
     date: '2025-10-12',
-    destination: destinations[6], // Aktobe - Arrivée
+    destination: getDestination('46'), // Shakpak Ata
     activities: [
       {
-        id: '32',
-        title: 'Arrivée à Aktobe',
-        description: 'Installation dans la ville industrielle',
-        destinationId: '7',
-        startTime: '15:00',
-        endTime: '17:00',
-        category: 'arrival'
-      },
-      {
-        id: '33',
-        title: 'Centre-ville',
-        description: 'Balade dans la ville industrielle moderne',
-        destinationId: '7',
-        startTime: '17:00',
-        endTime: '19:00',
-        category: 'sightseeing'
+        id: 'kz-03',
+        title: 'Boucle Shakpak Ata',
+        description: 'Exploration des mosquées troglodytes et falaises calcaires.',
+        destinationId: '46',
+        startTime: '08:00',
+        endTime: '14:00',
+        category: 'bike'
       }
     ],
-    notes: 'Arrivée à Aktobe depuis Atyrau en train',
-    order: 19,
-    transportToNext: {
-      type: 'rest',
-      duration: '1j',
-      distance: '0km',
-      notes: 'Exploration d\'Aktobe'
+    notes: 'Journée en étoile autour de Shetpe pour découvrir Shakpak Ata.',
+    order: 18,
+    bikeSegment: {
+      trajet: 'Boucle Shakpak Ata',
+      distance_km: 25,
+      route: 'pistes gravier/sable',
+      difficulte: 'modéré',
+      points_interet: ['Mosquée Shakpak Ata'],
+      reseau_eau: 'prévoir eau',
+      coordonnees: {
+        shakpak_ata: [44.221, 52.145]
+      }
     }
   },
   {
     date: '2025-10-13',
-    destination: destinations[6], // Aktobe - Jour 2
+    destination: getDestination('47'), // Torysh - Vallée des boules
     activities: [
       {
-        id: '34',
-        title: 'Musée d\'histoire régionale',
-        description: 'Culture et histoire d\'Aktobe',
-        destinationId: '7',
-        startTime: '10:00',
-        endTime: '12:00',
-        category: 'museum'
-      },
-      {
-        id: '35',
-        title: 'Parc central',
-        description: 'Détente dans les espaces verts',
-        destinationId: '7',
-        startTime: '14:00',
-        endTime: '16:00',
-        category: 'cultural'
+        id: 'kz-04',
+        title: 'Boucle Torysh (Vallée des boules)',
+        description: 'Boucle sableuse parmi les sphères rocheuses de Torysh.',
+        destinationId: '47',
+        startTime: '08:00',
+        endTime: '15:00',
+        category: 'bike'
       }
     ],
-    notes: 'Découverte culturelle d\'Aktobe',
+    notes: 'Immersion dans les formations géologiques de Torysh.',
+    order: 19,
+    bikeSegment: {
+      trajet: 'Boucle Torysh (Vallée des boules)',
+      distance_km: 30,
+      route: 'pistes sable',
+      difficulte: 'modéré',
+      points_interet: ['Vallée des boules (Torysh)'],
+      reseau_eau: 'réseau intermittent',
+      coordonnees: {
+        torysh: [44.3236, 51.5986]
+      }
+    }
+  },
+  {
+    date: '2025-10-14',
+    destination: getDestination('48'), // Camp Mangystau J2
+    activities: [
+      {
+        id: 'kz-05',
+        title: 'Shetpe → Zhanaozen (partie 1)',
+        description: 'Transfert sud sur route lisse vers le désert pétrolier.',
+        destinationId: '48',
+        startTime: '07:30',
+        endTime: '15:30',
+        category: 'bike'
+      }
+    ],
+    notes: 'Départ plein sud vers Zhanaozen avec un bivouac intermédiaire.',
     order: 20,
-    transportToNext: {
-      type: 'rest',
-      duration: '1j',
-      distance: '0km',
-      notes: 'Dernière journée à Aktobe'
-    }
-  },
-  {
-    date: '2025-10-14',
-    destination: destinations[6], // Aktobe - Préparation
-    activities: [
-      {
-        id: '36',
-        title: 'Préparation du train vers Kyzylorda',
-        description: 'Préparatifs pour le trajet vers le sud',
-        destinationId: '7',
-        startTime: '09:00',
-        endTime: '12:00',
-        category: 'preparation'
+    bikeSegment: {
+      trajet: 'Shetpe → Zhanaozen (partie 1)',
+      distance_km: 70,
+      route: 'goudronnée',
+      difficulte: 'facile',
+      points_interet: [],
+      reseau_eau: 'villages épars',
+      coordonnees: {
+        depart_shetpe: [44.16667, 52.11667],
+        etape: [43.8, 52.5]
       }
-    ],
-    notes: 'Préparation du départ en train vers Kyzylorda',
-    order: 21,
-    transportToNext: {
-      type: 'train',
-      duration: '14h',
-      distance: '950km',
-      notes: 'Train de jour Aktobe-Kyzylorda'
-    }
-  },
-  {
-    date: '2025-10-14',
-    destination: destinations[7], // Kyzylorda - Arrivée
-    activities: [
-      {
-        id: '37',
-        title: 'Arrivée à Kyzylorda',
-        description: 'Installation dans la ville historique du désert',
-        destinationId: '8',
-        startTime: '16:00',
-        endTime: '18:00',
-        category: 'arrival'
-      },
-      {
-        id: '38',
-        title: 'Balade en centre-ville',
-        description: 'Découverte de l\'architecture soviétique',
-        destinationId: '8',
-        startTime: '18:00',
-        endTime: '20:00',
-        category: 'sightseeing'
-      }
-    ],
-    notes: 'Arrivée à Kyzylorda depuis Aktobe',
-    order: 22,
-    transportToNext: {
-      type: 'rest',
-      duration: '1j',
-      distance: '0km',
-      notes: 'Exploration de Kyzylorda'
     }
   },
   {
     date: '2025-10-15',
-    destination: destinations[7], // Kyzylorda - Jour 2
+    destination: getDestination('49'), // Zhanaozen
     activities: [
       {
-        id: '39',
-        title: 'Musée archéologique',
-        description: 'Histoire ancienne de la région du Syr-Daria',
-        destinationId: '8',
-        startTime: '10:00',
-        endTime: '12:00',
-        category: 'museum'
+        id: 'kz-06',
+        title: 'Shetpe → Zhanaozen (partie 2)',
+        description: 'Derniers kilomètres jusqu\'à Zhanaozen via Beket Ata.',
+        destinationId: '49',
+        startTime: '07:30',
+        endTime: '14:30',
+        category: 'bike'
       },
       {
-        id: '40',
-        title: 'Rive du Syr-Daria',
-        description: 'Promenade le long du fleuve historique',
-        destinationId: '8',
-        startTime: '14:00',
-        endTime: '16:00',
-        category: 'nature'
+        id: 'kz-06-decouverte',
+        title: 'Balade urbaine à Zhanaozen',
+        description: 'Rencontre avec les locaux et logistique de la suite.',
+        destinationId: '49',
+        startTime: '16:00',
+        endTime: '18:00',
+        category: 'cultural'
       }
     ],
-    notes: 'Découverte historique de Kyzylorda',
-    order: 23,
-    transportToNext: {
-      type: 'rest',
-      duration: '1j',
-      distance: '0km',
-      notes: 'Dernière journée à Kyzylorda'
+    notes: 'Arrivée à Zhanaozen après une journée marqué par Beket Ata.',
+    order: 21,
+    bikeSegment: {
+      trajet: 'Shetpe → Zhanaozen (partie 2)',
+      distance_km: 70,
+      route: 'goudronnée',
+      difficulte: 'modéré',
+      points_interet: ['Mosquée souterraine Beket Ata'],
+      reseau_eau: 'réseau présent',
+      coordonnees: {
+        beket_ata: [43.59694, 54.07],
+        arrivee_zhanaozen: [43.34116, 52.86192]
+      }
     }
   },
   {
     date: '2025-10-16',
-    destination: destinations[7], // Kyzylorda - Préparation départ
+    destination: getDestination('50'), // Karagiye Depression
     activities: [
       {
-        id: '41',
-        title: 'Préparation bikepacking vers Shymkent',
-        description: 'Préparatifs pour le bikepacking vers le sud-est',
-        destinationId: '8',
-        startTime: '09:00',
-        endTime: '12:00',
-        category: 'preparation'
-      }
-    ],
-    notes: 'Préparation du départ en vélo vers Shymkent',
-    order: 24,
-    transportToNext: {
-      type: 'bike',
-      duration: '8h',
-      distance: '180km',
-      notes: 'Bikepacking Kyzylorda-Shymkent (étape 1/2)'
-    }
-  },
-  {
-    date: '2025-10-17',
-    destination: destinations[7], // Bikepacking jour 1
-    activities: [
-      {
-        id: '61',
-        title: 'Bikepacking dans le désert',
-        description: 'Traversée du désert kazakh vers Shymkent',
-        destinationId: '8',
+        id: 'kz-07',
+        title: 'Excursion Karagiye Depression',
+        description: 'Aller-retour exigeant sur pistes sable/cailloux au cœur de Karagiye.',
+        destinationId: '50',
         startTime: '08:00',
         endTime: '16:00',
-        category: 'nature'
+        category: 'bike'
       }
     ],
-    notes: 'Jour de bikepacking dans le désert kazakh',
-    order: 25,
-    transportToNext: {
-      type: 'bike',
-      duration: '6h',
-      distance: '200km',
-      notes: 'Bikepacking Kyzylorda-Shymkent (étape 2/2)'
+    notes: 'Immersion dans la dépression salée avec vigilance sur l\'hydratation.',
+    order: 22,
+    bikeSegment: {
+      trajet: 'Excursion Karagiye Depression',
+      distance_km: 50,
+      route: 'pistes sable/cailloux',
+      difficulte: 'difficile',
+      points_interet: ['Karagiye Depression'],
+      reseau_eau: 'prévoir 5–8 L',
+      coordonnees: {
+        karagiye: [43.4, 51.79]
+      }
     }
   },
   {
     date: '2025-10-17',
-    destination: destinations[12], // Shymkent - Arrivée
+    destination: getDestination('9'), // Almaty
     activities: [
       {
-        id: '42',
-        title: 'Arrivée à Shymkent',
-        description: 'Installation dans la troisième ville du Kazakhstan',
-        destinationId: '13',
-        startTime: '15:00',
-        endTime: '17:00',
-        category: 'arrival'
+        id: 'kz-08',
+        title: 'Train Mangystau → Almaty',
+        description: 'Long trajet ferroviaire pour rejoindre le sud-est kazakh.',
+        destinationId: '9',
+        startTime: '09:00',
+        endTime: '21:00',
+        category: 'transport'
       },
       {
-        id: '43',
-        title: 'Centre-ville moderne',
-        description: 'Balade dans les quartiers modernes et commerçants',
-        destinationId: '13',
-        startTime: '17:00',
-        endTime: '19:00',
-        category: 'sightseeing'
+        id: 'kz-08-repos',
+        title: 'Repos et acclimatation',
+        description: 'Installation dans le quartier central d\'Almaty.',
+        destinationId: '9',
+        startTime: '21:00',
+        endTime: '23:00',
+        category: 'rest'
       }
     ],
-    notes: 'Arrivée à Shymkent après bikepacking depuis Kyzylorda',
-    order: 26,
+    notes: 'Traversée ferroviaire Mangystau → Almaty pour lancer la deuxième semaine.',
+    order: 23,
     transportToNext: {
-      type: 'rest',
-      duration: '1j',
-      distance: '0km',
-      notes: 'Exploration de Shymkent'
+      type: 'train',
+      duration: '36h',
+      distance: '2100km',
+      notes: 'Train Mangystau → Almaty (repos, wagon-couchettes)',
+      pointsOfInterest: 'Beyneu, Shalkar, Aral, Kyzylorda, Turkistan, Shymkent, Taraz, Shu'
     }
   },
   {
     date: '2025-10-18',
-    destination: destinations[12], // Shymkent - Jour 2
+    destination: getDestination('51'), // Approche Charyn Canyon
     activities: [
       {
-        id: '44',
-        title: 'Parc central et fontaines',
-        description: 'Détente dans les espaces verts modernes',
-        destinationId: '13',
-        startTime: '10:00',
-        endTime: '12:00',
-        category: 'cultural'
-      },
+        id: 'kz-09',
+        title: 'Almaty → Charyn Canyon (approche)',
+        description: 'Route secondaire vers les gorges du Charyn.',
+        destinationId: '51',
+        startTime: '07:30',
+        endTime: '15:00',
+        category: 'bike'
+      }
+    ],
+    notes: 'Première étape dans la région d\'Almaty, progression vers le canyon.',
+    order: 24,
+    bikeSegment: {
+      trajet: 'Almaty → Charyn Canyon (approche)',
+      distance_km: 60,
+      route: 'route secondaire',
+      difficulte: 'modéré',
+      points_interet: [],
+      reseau_eau: 'réseau continu',
+      coordonnees: {
+        depart_almaty: [43.25667, 76.92861],
+        etape: [43.3, 78.6]
+      }
+    }
+  },
+  {
+    date: '2025-10-19',
+    destination: getDestination('52'), // Charyn Canyon
+    activities: [
       {
-        id: '45',
-        title: 'Marché traditionnel',
-        description: 'Découverte des produits locaux et artisanat',
-        destinationId: '13',
-        startTime: '14:00',
+        id: 'kz-10',
+        title: 'Charyn Canyon boucle',
+        description: 'Boucle mixte route/piste dans le canyon et le long de la rivière.',
+        destinationId: '52',
+        startTime: '08:00',
         endTime: '16:00',
-        category: 'shopping'
+        category: 'bike'
       }
     ],
-    notes: 'Découverte moderne de Shymkent',
-    order: 27,
-    transportToNext: {
-      type: 'rest',
-      duration: '1j',
-      distance: '0km',
-      notes: 'Dernière journée à Shymkent'
-    }
-  },
-  {
-    date: '2025-10-19',
-    destination: destinations[12], // Shymkent - Préparation bikepacking
-    activities: [
-      {
-        id: '46',
-        title: 'Préparation bikepacking vers Turkistan',
-        description: 'Préparatifs pour le bikepacking historique',
-        destinationId: '13',
-        startTime: '09:00',
-        endTime: '12:00',
-        category: 'preparation'
+    notes: 'Découverte approfondie des gorges et formations du canyon de Charyn.',
+    order: 25,
+    bikeSegment: {
+      trajet: 'Charyn Canyon boucle',
+      distance_km: 70,
+      route: 'route + piste',
+      difficulte: 'modéré',
+      points_interet: ['Charyn Canyon', 'formations rocheuses'],
+      reseau_eau: 'prévoir eau sur site',
+      coordonnees: {
+        charyn_viewpoint: [43.3547892, 79.0619113],
+        charyn_river: [43.303663, 79.011236]
       }
-    ],
-    notes: 'Préparation du départ en vélo vers Turkistan (site UNESCO)',
-    order: 28,
-    transportToNext: {
-      type: 'bike',
-      duration: '8h',
-      distance: '160km',
-      notes: 'Bikepacking Shymkent-Turkistan'
-    }
-  },
-  {
-    date: '2025-10-19',
-    destination: destinations[13], // Turkistan - Arrivée
-    activities: [
-      {
-        id: '47',
-        title: 'Arrivée à Turkistan',
-        description: 'Installation près du mausolée historique',
-        destinationId: '14',
-        startTime: '15:00',
-        endTime: '17:00',
-        category: 'arrival'
-      },
-      {
-        id: '48',
-        title: 'Mausolée d\'Ahmed Yasawi',
-        description: 'Visite du site UNESCO classé',
-        destinationId: '14',
-        startTime: '17:00',
-        endTime: '19:00',
-        category: 'sightseeing'
-      }
-    ],
-    notes: 'Arrivée à Turkistan après bikepacking, site historique UNESCO',
-    order: 29,
-    transportToNext: {
-      type: 'rest',
-      duration: '1j',
-      distance: '0km',
-      notes: 'Exploration de Turkistan'
     }
   },
   {
     date: '2025-10-20',
-    destination: destinations[13], // Turkistan - Jour 2
+    destination: getDestination('53'), // Plateau retour Charyn
     activities: [
       {
-        id: '49',
-        title: 'Complexe historique',
-        description: 'Exploration complète du site médiéval',
-        destinationId: '14',
-        startTime: '09:00',
-        endTime: '12:00',
-        category: 'museum'
-      },
-      {
-        id: '50',
-        title: 'Musée local',
-        description: 'Histoire de la Route de la Soie',
-        destinationId: '14',
-        startTime: '14:00',
-        endTime: '16:00',
-        category: 'cultural'
+        id: 'kz-11',
+        title: 'Route retour Charyn',
+        description: 'Retour vers le plateau avant de filer vers la vallée de l\'Ili.',
+        destinationId: '53',
+        startTime: '07:30',
+        endTime: '15:00',
+        category: 'bike'
       }
     ],
-    notes: 'Immersion historique à Turkistan',
-    order: 30,
-    transportToNext: {
-      type: 'rest',
-      duration: '1j',
-      distance: '0km',
-      notes: 'Dernière journée à Turkistan'
+    notes: 'Transition vers la vallée de l\'Ili avec un profil plus roulant.',
+    order: 26,
+    bikeSegment: {
+      trajet: 'Route retour Charyn',
+      distance_km: 50,
+      route: 'goudronnée',
+      difficulte: 'facile',
+      points_interet: [],
+      reseau_eau: 'réseau présent',
+      coordonnees: {
+        depart_canyon: [43.3547892, 79.0619113],
+        retour_charyn: [43.35, 78.8]
+      }
     }
   },
   {
     date: '2025-10-21',
-    destination: destinations[13], // Turkistan - Préparation bikepacking
+    destination: getDestination('54'), // Vallée de l'Ili - Village 1
     activities: [
       {
-        id: '51',
-        title: 'Préparation bikepacking vers Taraz',
-        description: 'Préparatifs pour le bikepacking vers les montagnes',
-        destinationId: '14',
-        startTime: '09:00',
-        endTime: '12:00',
-        category: 'preparation'
-      }
-    ],
-    notes: 'Préparation du départ en vélo vers Taraz et les montagnes',
-    order: 31,
-    transportToNext: {
-      type: 'bike',
-      duration: '10h',
-      distance: '140km',
-      notes: 'Bikepacking Turkistan-Taraz (étape 1/2)'
-    }
-  },
-  {
-    date: '2025-10-22',
-    destination: destinations[13], // Bikepacking jour 1
-    activities: [
-      {
-        id: '62',
-        title: 'Bikepacking vers les montagnes',
-        description: 'Traversée des steppes kazakhes vers Taraz',
-        destinationId: '14',
+        id: 'kz-12',
+        title: 'Vallée de l’Ili (partie 1)',
+        description: 'Immersion dans les villages de la vallée de l\'Ili.',
+        destinationId: '54',
         startTime: '08:00',
-        endTime: '18:00',
-        category: 'nature'
+        endTime: '15:30',
+        category: 'bike'
       }
     ],
-    notes: 'Jour de bikepacking dans les steppes kazakhes',
-    order: 32,
-    transportToNext: {
-      type: 'bike',
-      duration: '8h',
-      distance: '140km',
-      notes: 'Bikepacking Turkistan-Taraz (étape 2/2)'
+    notes: 'Découverte des villages et cultures de la vallée de l\'Ili.',
+    order: 27,
+    bikeSegment: {
+      trajet: 'Vallée de l’Ili (partie 1)',
+      distance_km: 60,
+      route: 'goudronnée',
+      difficulte: 'facile',
+      points_interet: ['Villages traditionnels'],
+      reseau_eau: 'villages réguliers',
+      coordonnees: {
+        ili_vallee_1: [44.0, 77.2]
+      }
     }
   },
   {
     date: '2025-10-22',
-    destination: destinations[14], // Taraz - Arrivée
+    destination: getDestination('55'), // Vallée de l'Ili - Village 2
     activities: [
       {
-        id: '52',
-        title: 'Arrivée à Taraz',
-        description: 'Installation dans l\'ancienne ville de la Route de la Soie',
-        destinationId: '15',
-        startTime: '15:00',
-        endTime: '17:00',
-        category: 'arrival'
-      },
-      {
-        id: '53',
-        title: 'Centre historique',
-        description: 'Balade dans les quartiers anciens',
-        destinationId: '15',
-        startTime: '17:00',
-        endTime: '19:00',
-        category: 'sightseeing'
+        id: 'kz-13',
+        title: 'Vallée de l’Ili (partie 2)',
+        description: 'Poursuite de la vallée avec panoramas sur la rivière.',
+        destinationId: '55',
+        startTime: '08:00',
+        endTime: '15:00',
+        category: 'bike'
       }
     ],
-    notes: 'Arrivée à Taraz après bikepacking, ancienne capitale historique',
-    order: 33,
-    transportToNext: {
-      type: 'rest',
-      duration: '1j',
-      distance: '0km',
-      notes: 'Exploration de Taraz'
+    notes: 'Panoramas sur la rivière Ili et rencontres villageoises.',
+    order: 28,
+    bikeSegment: {
+      trajet: 'Vallée de l’Ili (partie 2)',
+      distance_km: 60,
+      route: 'goudronnée',
+      difficulte: 'facile',
+      points_interet: ['Panoramas', 'Rivière Ili'],
+      reseau_eau: 'réseau quasi partout',
+      coordonnees: {
+        ili_vallee_2: [44.3, 77.0]
+      }
     }
   },
   {
     date: '2025-10-23',
-    destination: destinations[14], // Taraz - Jour 2
+    destination: getDestination('56'), // Altyn-Emel - Entrée
     activities: [
       {
-        id: '54',
-        title: 'Monuments historiques',
-        description: 'Visite des mausolées et fortifications anciennes',
-        destinationId: '15',
-        startTime: '09:00',
-        endTime: '12:00',
-        category: 'sightseeing'
-      },
-      {
-        id: '55',
-        title: 'Musée archéologique',
-        description: 'Collections de la période sogdienne',
-        destinationId: '15',
-        startTime: '14:00',
-        endTime: '16:00',
-        category: 'museum'
+        id: 'kz-14',
+        title: 'Altyn-Emel NP (approche)',
+        description: 'Approche du parc national Altyn-Emel.',
+        destinationId: '56',
+        startTime: '07:30',
+        endTime: '14:30',
+        category: 'bike'
       }
     ],
-    notes: 'Découverte archéologique de Taraz',
-    order: 34,
-    transportToNext: {
-      type: 'rest',
-      duration: '1j',
-      distance: '0km',
-      notes: 'Dernière journée à Taraz'
+    notes: 'Entrée dans le parc d\'Altyn-Emel par les pistes roulantes.',
+    order: 29,
+    bikeSegment: {
+      trajet: 'Altyn-Emel NP (approche)',
+      distance_km: 50,
+      route: 'route',
+      difficulte: 'modéré',
+      points_interet: [],
+      reseau_eau: 'prévoir réserve',
+      coordonnees: {
+        altyn_emel_entree: [44.2, 78.26]
+      }
     }
   },
   {
     date: '2025-10-24',
-    destination: destinations[14], // Taraz - Préparation bikepacking
+    destination: getDestination('57'), // Altyn-Emel - Dunes chantantes
     activities: [
       {
-        id: '56',
-        title: 'Préparation bikepacking vers Almaty',
-        description: 'Préparatifs pour le bikepacking vers la mégapole',
-        destinationId: '15',
-        startTime: '09:00',
-        endTime: '12:00',
-        category: 'preparation'
-      }
-    ],
-    notes: 'Préparation du départ en vélo vers Almaty',
-    order: 35,
-    transportToNext: {
-      type: 'bike',
-      duration: '10h',
-      distance: '225km',
-      notes: 'Bikepacking Taraz-Almaty (étape 1/2)'
-    }
-  },
-  {
-    date: '2025-10-25',
-    destination: destinations[14], // Bikepacking jour 1
-    activities: [
-      {
-        id: '63',
-        title: 'Bikepacking vers Almaty',
-        description: 'Traversée des montagnes et vallées kazakhes',
-        destinationId: '15',
+        id: 'kz-15',
+        title: 'Altyn-Emel mini-boucle',
+        description: 'Tour des dunes chantantes et montagnes colorées.',
+        destinationId: '57',
         startTime: '08:00',
-        endTime: '18:00',
-        category: 'nature'
+        endTime: '15:30',
+        category: 'bike'
       }
     ],
-    notes: 'Jour de bikepacking intense vers Almaty',
-    order: 36,
-    transportToNext: {
-      type: 'bike',
-      duration: '8h',
-      distance: '225km',
-      notes: 'Bikepacking Taraz-Almaty (étape 2/2)'
+    notes: 'Journée découverte des dunes chantantes d\'Altyn-Emel.',
+    order: 30,
+    bikeSegment: {
+      trajet: 'Altyn-Emel mini-boucle',
+      distance_km: 45,
+      route: 'pistes sable/gravier',
+      difficulte: 'modéré',
+      points_interet: ['Dunes chantantes', 'Montagnes colorées'],
+      reseau_eau: 'prévoir eau',
+      coordonnees: {
+        dunes_chantantes: [44.18, 78.36]
+      }
     }
   },
   {
     date: '2025-10-25',
-    destination: destinations[8], // Almaty - Arrivée
+    destination: getDestination('58'), // Altyn-Emel - Camp retour
     activities: [
       {
-        id: '57',
-        title: 'Arrivée à Almaty',
-        description: 'Installation dans la plus grande ville du Kazakhstan',
-        destinationId: '9',
-        startTime: '17:00',
-        endTime: '19:00',
-        category: 'arrival'
-      },
-      {
-        id: '58',
-        title: 'Balade dans le centre',
-        description: 'Première découverte du centre-ville',
-        destinationId: '9',
-        startTime: '19:00',
-        endTime: '21:00',
-        category: 'sightseeing'
+        id: 'kz-16',
+        title: 'Altyn-Emel retour',
+        description: 'Sortie du parc par pistes roulantes vers le nord.',
+        destinationId: '58',
+        startTime: '07:30',
+        endTime: '14:30',
+        category: 'bike'
       }
     ],
-    notes: 'Arrivée à Almaty après bikepacking intense',
-    order: 37,
-    transportToNext: {
-      type: 'rest',
-      duration: '1j',
-      distance: '0km',
-      notes: 'Exploration d\'Almaty'
+    notes: 'Fin de la boucle Altyn-Emel, retour aux routes principales.',
+    order: 31,
+    bikeSegment: {
+      trajet: 'Altyn-Emel retour',
+      distance_km: 50,
+      route: 'route',
+      difficulte: 'facile',
+      points_interet: [],
+      reseau_eau: 'villages possibles',
+      coordonnees: {
+        retour_altyn_emel: [44.05, 78.1]
+      }
     }
   },
   {
     date: '2025-10-26',
-    destination: destinations[8], // Almaty - Jour 2
+    destination: getDestination('9'), // Almaty
     activities: [
       {
-        id: '59',
-        title: 'Montagnes Zailiysky',
-        description: 'Randonnée dans les montagnes environnantes',
+        id: 'kz-17',
+        title: 'Repos à Almaty',
+        description: 'Journée off pour récupérer et profiter de la ville.',
         destinationId: '9',
-        startTime: '09:00',
-        endTime: '12:00',
-        category: 'nature'
-      },
-      {
-        id: '60',
-        title: 'Musée central d\'État',
-        description: 'Histoire et culture kazakhes',
-        destinationId: '9',
-        startTime: '14:00',
-        endTime: '16:00',
-        category: 'museum'
+        startTime: '10:00',
+        endTime: '22:00',
+        category: 'rest'
       }
     ],
-    notes: 'Découverte naturelle et culturelle d\'Almaty',
-    order: 38,
+    notes: 'Repos complet avant la traversée vers la frontière chinoise.',
+    order: 32,
     transportToNext: {
       type: 'rest',
       duration: '1j',
       distance: '0km',
-      notes: 'Dernière journée à Almaty'
+      notes: 'Récupération et intendance à Almaty'
     }
   },
   {
     date: '2025-10-27',
-    destination: destinations[8], // Almaty - Préparation bikepacking
+    destination: getDestination('9'), // Almaty
     activities: [
       {
-        id: '64',
-        title: 'Préparation bikepacking vers frontière',
-        description: 'Préparatifs pour la dernière étape vers la Chine',
+        id: 'kz-18',
+        title: 'Préparation bikepacking vers Khorgos',
+        description: 'Révision vélo, logistique eau et nourriture pour deux jours.',
         destinationId: '9',
         startTime: '09:00',
-        endTime: '12:00',
+        endTime: '13:00',
         category: 'preparation'
-      }
-    ],
-    notes: 'Préparation du départ en vélo vers la frontière chinoise',
-    order: 39,
-    transportToNext: {
-      type: 'bike',
-      duration: '10h',
-      distance: '160km',
-      notes: 'Bikepacking Almaty-frontière chinoise (étape 1/2)'
-    }
-  },
-  {
-    date: '2025-10-28',
-    destination: destinations[8], // Bikepacking jour 1
-    activities: [
+      },
       {
-        id: '65',
-        title: 'Bikepacking vers la frontière',
-        description: 'Dernière traversée kazakhe vers la Chine',
+        id: 'kz-18-balade',
+        title: 'Balade légère dans Almaty',
+        description: 'Derniers achats et visite du bazar vert.',
         destinationId: '9',
-        startTime: '08:00',
+        startTime: '15:00',
         endTime: '18:00',
-        category: 'nature'
+        category: 'cultural'
       }
     ],
-    notes: 'Jour de bikepacking vers la frontière sino-kazakhe',
-    order: 40,
-    transportToNext: {
-      type: 'bike',
-      duration: '6h',
-      distance: '160km',
-      notes: 'Bikepacking Almaty-frontière chinoise (étape 2/2)'
-    }
+    notes: 'Préparation logistique pour la traversée vers Khorgos.',
+    order: 33
   },
   {
     date: '2025-10-28',
-    destination: destinations[11], // Frontière Kazakhstan-Chine
+    destination: getDestination('59'), // Camp Steppe vers Khorgos
     activities: [
       {
-        id: '61',
-        title: 'Arrivée à la frontière',
-        description: 'Formalités douanières Kazakhstan-Chine',
-        destinationId: '12',
-        startTime: '14:00',
-        endTime: '18:00',
+        id: 'kz-19',
+        title: 'Almaty → Camp steppe Khorgos (partie 1)',
+        description: 'Longue étape gravel à travers les steppes vers l\'est.',
+        destinationId: '59',
+        startTime: '07:00',
+        endTime: '17:00',
+        category: 'bike'
+      }
+    ],
+    notes: 'Première journée vers Khorgos avec passages dans les dunes et collines.',
+    order: 34,
+    bikeSegment: {
+      trajet: 'Almaty → Camp steppe Khorgos (partie 1)',
+      distance_km: 160,
+      route: 'piste gravier/sable',
+      difficulte: 'modéré',
+      points_interet: ['Altyn-Emel NP', 'dunes chantantes', 'montagnes colorées'],
+      reseau_eau: 'Réseau intermittent, prévoir eau',
+      coordonnees: {
+        depart_almaty: [43.25667, 76.92861],
+        camp_steppe: [44.6, 80.0]
+      }
+    }
+  },
+  {
+    date: '2025-10-29',
+    destination: getDestination('60'), // Poste frontalier de Khorgos
+    activities: [
+      {
+        id: 'kz-20',
+        title: 'Camp steppe → Khorgos (partie 2)',
+        description: 'Derniers kilomètres kazakhs jusqu\'au poste frontalier.',
+        destinationId: '60',
+        startTime: '07:30',
+        endTime: '15:30',
+        category: 'bike'
+      }
+    ],
+    notes: 'Arrivée au poste frontalier de Khorgos, fin de la traversée kazakhe.',
+    order: 35,
+    bikeSegment: {
+      trajet: 'Camp steppe → Khorgos (partie 2)',
+      distance_km: 160,
+      route: 'piste gravier/sable',
+      difficulte: 'modéré',
+      points_interet: ['Frontière sino-kazakhe', 'derniers panoramas'],
+      reseau_eau: 'Réseau intermittent, prévoir eau',
+      coordonnees: {
+        camp_steppe: [44.6, 80.0],
+        frontiere_khorgos: [44.2, 80.0]
+      }
+    }
+  },
+  {
+    date: '2025-10-29',
+    destination: getDestination('60'), // Poste frontalier de Khorgos
+    activities: [
+      {
+        id: 'kz-21',
+        title: 'Formalités frontière Khorgos',
+        description: 'Démarches administratives avant l\'entrée en Chine.',
+        destinationId: '60',
+        startTime: '16:00',
+        endTime: '19:00',
         category: 'preparation'
       }
     ],
-    notes: 'Traversée de la frontière Kazakhstan-Chine après 25 jours de bikepacking',
-    order: 41,
+    notes: 'Formalités et repos au poste de Khorgos avant l\'entrée en Chine.',
+    order: 36,
     transportToNext: {
       type: 'rest',
       duration: '1j',
       distance: '0km',
-      notes: 'Entrée en Chine'
+      notes: 'Repos à Khorgos avant passage en Chine'
     }
   }
 ];
