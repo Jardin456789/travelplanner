@@ -18,14 +18,18 @@ nvm use 20
 npm install
 ```
 
-2) Configurer Mapbox
+2) Configurer les APIs externes
 
 ```env
 # .env.local
 NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN=votre_cle_api_mapbox
+# Optionnel : token Mapbox dédié à la géocodification
+MAPBOX_GEOCODING_ACCESS_TOKEN=votre_cle_api_mapbox
 ```
 
-Sans token, un token de démo est utilisé (limite ~50k vues/mois).
+Sans token Mapbox, un token de démo est utilisé (limite ~50k vues/mois).
+
+La recherche de destinations (autocomplete + coordonnées) passe désormais par l'API Geocoding de Mapbox. Si `MAPBOX_GEOCODING_ACCESS_TOKEN` est vide, le token public (`NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN`) sera utilisé côté serveur.
 
 3) Lancer le serveur de dev
 

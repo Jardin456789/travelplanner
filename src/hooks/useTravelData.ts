@@ -56,6 +56,7 @@ export function useTravelData(): UseTravelDataResult {
         }
 
         return {
+          id: step._id,
           date: step.date,
           destination,
           activities: step.activities,

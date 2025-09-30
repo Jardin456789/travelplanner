@@ -96,3 +96,19 @@ export const deleteStep = mutation({
     await db.delete(id);
   }
 });
+
+export const reorderSteps = mutation({
+  args: {
+    steps: v.array(
+      v.object({
+        id: v.id('steps'),
+        order: v.number()
+      })
+    )
+  },
+  handler: async ({ db }, { steps }) => {
+    await Promise.all(
+      steps.map(({ id, order }) => db.patch(id, { order }))
+    );
+  }
+});

@@ -50,6 +50,7 @@ export interface BikeSegmentDetails {
 }
 
 export interface DayItinerary {
+  id?: string;
   date: string; // ISO date string
   destination: Destination; // Destination principale du jour
   activities: Activity[];
