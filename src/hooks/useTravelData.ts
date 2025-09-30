@@ -32,7 +32,7 @@ export function useTravelData(): UseTravelDataResult {
 
   const stepDocs = useQuery(
     api.steps.listByItinerary,
-    selectedItinerary ? { itineraryId: selectedItinerary._id } : undefined
+    selectedItinerary ? { itineraryId: selectedItinerary._id } : 'skip'
   );
 
   return useMemo(() => {
