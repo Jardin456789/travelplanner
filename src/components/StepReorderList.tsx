@@ -99,7 +99,7 @@ export function StepReorderList({ steps, onReorder, onCancel, isSubmitting = fal
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-    useSensor(TouchSensor, { pressDelay: 120, pressTolerance: 8 }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 120, tolerance: 8 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
 

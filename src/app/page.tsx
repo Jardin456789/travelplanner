@@ -1,36 +1,20 @@
 'use client';
 
-import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { formatDate, useCurrentDate } from '@/lib/date-utils';
-import { ChevronDown, ChevronUp, Calendar } from 'lucide-react';
+import { useState, useRef, useMemo } from 'react';
+import { useCurrentDate } from '@/lib/date-utils';
 import { parseISO, isBefore, isEqual } from 'date-fns';
 import dynamic from 'next/dynamic';
-import Image from 'next/image';
-import ItineraryCard from '@/components/ItineraryCard';
 import MapStyleSelector from '@/components/MapStyleSelector';
 import { Button } from '@/components/ui/button';
-import { AppHeader, ThemeSelector } from '@/design-system/components';
-import { Destination, DayItinerary } from '@/types/travel';
-import { MAPBOX_STYLES } from '@/components/Map';
-import { Plus } from 'lucide-react';
 import { useTravelData } from '@/hooks/useTravelData';
 import { AddStepDialog } from '@/components/AddStepDialog';
-import { StepReorderList } from '@/components/StepReorderList';
-import { useMutation } from 'convex/react';
-import { api } from '../../convex/_generated/api';
-import type { Id } from '../../convex/_generated/dataModel';
-
-// Type pour représenter une étape ou un groupe d'étapes consécutives
-type StepGroup = {
-  type: 'single';
-  day: DayItinerary;
-} | {
-  type: 'range';
-  days: DayItinerary[];
-  startDate: Date;
-  endDate: Date;
-  destination: Destination;
-};
+import { useItineraryState } from '@/hooks/useItineraryState';
+import { useMobileNavigation } from '@/hooks/useMobileNavigation';
+import { useMonthGrouping } from '@/hooks/useMonthGrouping';
+import SidebarPanel from '@/components/SidebarPanel';
+import MobilePanel from '@/components/MobilePanel';
+import { MAPBOX_STYLES } from '@/components/Map';
+import { Plus } from 'lucide-react';
 
 // Dynamically import TravelMap component to avoid SSR issues with Mapbox
 const TravelMap = dynamic(() => import('@/components/Map'), {
@@ -42,367 +26,53 @@ const TravelMap = dynamic(() => import('@/components/Map'), {
 
 export default function Home() {
   const { loading, destinations, dayItineraries, itinerary } = useTravelData();
-  const sortedDayItineraries = useMemo(() => {
-    return [...dayItineraries].sort((a, b) => a.order - b.order);
-  }, [dayItineraries]);
-  const reorderStepsMutation = useMutation(api.steps.reorderSteps);
-  const canReorder = useMemo(
-    () => sortedDayItineraries.length > 0 && sortedDayItineraries.every(step => Boolean(step.id)),
-    [sortedDayItineraries]
-  );
 
+  // États de base
   const [mapStyle, setMapStyle] = useState<string>(MAPBOX_STYLES.satelliteStreets);
-  const stepsContainerRef = useRef<HTMLDivElement>(null);
 
   // Utiliser la date actuelle côté client
   const clientCurrentDate = useCurrentDate();
 
-  // Déterminer l'étape actuelle basée sur la date côté client
+  // Trier les étapes
+  const sortedDayItineraries = useMemo(() => {
+    return [...dayItineraries].sort((a, b) => a.order - b.order);
+  }, [dayItineraries]);
+
+  // Déterminer l'étape actuelle
   const currentStep = useMemo(() => {
-    return [...sortedDayItineraries]
+    const step = [...sortedDayItineraries]
       .reverse()
       .find(day => {
         const dayDate = parseISO(day.date);
         dayDate.setHours(0, 0, 0, 0);
         return isEqual(dayDate, clientCurrentDate) || isBefore(dayDate, clientCurrentDate);
       });
+    
+    if (step) {
+      console.log('📍 Étape actuelle détectée:', {
+        destination: step.destination?.name,
+        date: step.date,
+        dateAujourdhui: clientCurrentDate.toLocaleDateString('fr-FR')
+      });
+    }
+    
+    return step;
   }, [clientCurrentDate, sortedDayItineraries]);
 
-  // Fonction pour grouper les étapes consécutives dans la même destination
-  const groupConsecutiveSteps = (days: DayItinerary[]): StepGroup[] => {
-    const groups: StepGroup[] = [];
-    let currentGroup: DayItinerary[] = [];
+  // Hooks personnalisés
+  const { groupedByMonth } = useMonthGrouping({ dayItineraries: sortedDayItineraries, clientCurrentDate });
+  const itineraryState = useItineraryState(currentStep || null, sortedDayItineraries);
+  const mobileNav = useMobileNavigation({
+    allSteps: sortedDayItineraries,
+    selectedStep: itineraryState.selectedStep,
+    onStepSelect: itineraryState.setSelectedStep,
+  });
 
-    for (let i = 0; i < days.length; i++) {
-      const day = days[i];
+  const canReorder = useMemo(
+    () => sortedDayItineraries.length > 0 && sortedDayItineraries.every(step => Boolean(step.id)),
+    [sortedDayItineraries]
+  );
 
-      if (currentGroup.length === 0) {
-        // Démarrer un nouveau groupe
-        currentGroup = [day];
-      } else {
-        const lastDay = currentGroup[currentGroup.length - 1];
-
-        // Vérifier si cette étape est consécutive et dans la même destination
-        if (lastDay.destination.id === day.destination.id &&
-            lastDay.order + 1 === day.order) {
-          // Ajouter au groupe existant
-          currentGroup.push(day);
-        } else {
-          // Fermer le groupe actuel et en démarrer un nouveau
-          if (currentGroup.length === 1) {
-            groups.push({ type: 'single', day: currentGroup[0] });
-          } else {
-            groups.push({
-              type: 'range',
-              days: currentGroup,
-              startDate: new Date(currentGroup[0].date),
-              endDate: new Date(currentGroup[currentGroup.length - 1].date),
-              destination: currentGroup[0].destination
-            });
-          }
-          currentGroup = [day];
-        }
-      }
-    }
-
-    // Fermer le dernier groupe
-    if (currentGroup.length === 1) {
-      groups.push({ type: 'single', day: currentGroup[0] });
-    } else if (currentGroup.length > 1) {
-      groups.push({
-        type: 'range',
-        days: currentGroup,
-        startDate: new Date(currentGroup[0].date),
-        endDate: new Date(currentGroup[currentGroup.length - 1].date),
-        destination: currentGroup[0].destination
-      });
-    }
-
-    return groups;
-  };
-
-  // Grouper les étapes par mois avec regroupement des séjours consécutifs
-  const groupedByMonth = (() => {
-    // D'abord grouper par mois les étapes individuelles
-    const monthGroups = sortedDayItineraries.reduce((acc, day) => {
-      const date = new Date(day.date);
-      const monthKey = date.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }).toLowerCase().replace(' ', '-');
-      if (!acc[monthKey]) {
-        acc[monthKey] = [];
-      }
-      acc[monthKey].push(day);
-      return acc;
-    }, {} as Record<string, DayItinerary[]>);
-
-    // Ensuite regrouper les étapes consécutives dans chaque mois
-    const finalGroups: Record<string, StepGroup[]> = {};
-    Object.entries(monthGroups).forEach(([monthKey, days]) => {
-      // Trier les jours par ordre
-      const orderedDays = [...days].sort((a, b) => a.order - b.order);
-      finalGroups[monthKey] = groupConsecutiveSteps(orderedDays);
-    });
-
-    return finalGroups;
-  })();
-
-  // Initialiser les mois ouverts avec seulement le mois actuel
-  const getInitialExpandedMonths = () => {
-    const expandedMonths = new Set<string>();
-    if (currentStep) {
-      const currentDate = new Date(currentStep.date);
-      const currentMonthKey = currentDate.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }).toLowerCase().replace(' ', '-');
-      expandedMonths.add(currentMonthKey);
-    }
-    return expandedMonths;
-  };
-
-  const [expandedMonths, setExpandedMonths] = useState<Set<string>>(getInitialExpandedMonths());
-  const [selectedStep, setSelectedStep] = useState<DayItinerary | null>(currentStep || null);
-  const [isAddStepOpen, setIsAddStepOpen] = useState(false);
-  const [isReorderMode, setIsReorderMode] = useState(false);
-  const [isSavingOrder, setIsSavingOrder] = useState(false);
-  const [reorderError, setReorderError] = useState<string | null>(null);
-  const previousStepCountRef = useRef<number>(sortedDayItineraries.length);
-  const hasInitializedNewStepRef = useRef(false);
-
-  // État pour la navigation mobile par étapes
-  const [currentMobileStepIndex, setCurrentMobileStepIndex] = useState<number>(0);
-  const [selectedMobileMonth, setSelectedMobileMonth] = useState<string>('all');
-
-  // État pour le swipe
-  const [touchStart, setTouchStart] = useState<number | null>(null);
-  const [touchEnd, setTouchEnd] = useState<number | null>(null);
-
-  // État pour contrôler la source de la mise à jour
-  const [updateSource, setUpdateSource] = useState<'mobile' | 'map' | null>(null);
-
-  // Liste aplatie de toutes les étapes pour la navigation mobile
-  const allSteps = sortedDayItineraries;
-
-  // Étapes filtrées par mois pour mobile
-  const mobileFilteredSteps = useMemo(() => {
-    if (selectedMobileMonth === 'all') {
-      return allSteps;
-    }
-    const monthDate = new Date(selectedMobileMonth);
-    return allSteps.filter(step => {
-      const stepDate = new Date(step.date);
-      return stepDate.getMonth() === monthDate.getMonth() && stepDate.getFullYear() === monthDate.getFullYear();
-    });
-  }, [allSteps, selectedMobileMonth]);
-
-  // Étape actuelle affichée sur mobile
-  const currentMobileStep = mobileFilteredSteps[currentMobileStepIndex] || null;
-
-  // Index de l'étape actuelle basée sur la date (pour le GIF)
-  const currentDateStepIndex = useMemo(() => {
-    if (!currentStep) return -1;
-    return mobileFilteredSteps.findIndex(step => step.order === currentStep.order);
-  }, [currentStep, mobileFilteredSteps]);
-
-  // Fonctions de navigation mobile
-  const goToNextStep = useCallback(() => {
-    if (currentMobileStepIndex < mobileFilteredSteps.length - 1) {
-      setUpdateSource('mobile');
-      setCurrentMobileStepIndex(prev => prev + 1);
-      // Mettre à jour selectedStep pour que la carte suive
-      const nextStep = mobileFilteredSteps[currentMobileStepIndex + 1];
-      if (nextStep) {
-        setSelectedStep(nextStep);
-      }
-    }
-  }, [currentMobileStepIndex, mobileFilteredSteps]);
-
-  const goToPreviousStep = useCallback(() => {
-    if (currentMobileStepIndex > 0) {
-      setUpdateSource('mobile');
-      setCurrentMobileStepIndex(prev => prev - 1);
-      // Mettre à jour selectedStep pour que la carte suive
-      const prevStep = mobileFilteredSteps[currentMobileStepIndex - 1];
-      if (prevStep) {
-        setSelectedStep(prevStep);
-      }
-    }
-  }, [currentMobileStepIndex, mobileFilteredSteps]);
-
-  const handleReorder = useCallback(async (updatedSteps: DayItinerary[]) => {
-    if (!canReorder) {
-      setReorderError("Impossible de réordonner tant que toutes les étapes ne sont pas synchronisées.");
-      throw new Error('Reorder not allowed');
-    }
-
-    const payload = updatedSteps.map((step) => {
-      if (!step.id) {
-        throw new Error('Étape manquante, impossible de mettre à jour son ordre.');
-      }
-      return {
-        id: step.id as Id<'steps'>,
-        order: step.order,
-      };
-    });
-
-    setIsSavingOrder(true);
-    setReorderError(null);
-
-    try {
-      await reorderStepsMutation({ steps: payload });
-    } catch (error) {
-      console.error('Failed to reorder steps', error);
-      const message = error instanceof Error
-        ? error.message
-        : 'Une erreur est survenue lors de la mise à jour de l\'ordre.';
-      setReorderError(message);
-      throw error;
-    } finally {
-      setIsSavingOrder(false);
-    }
-  }, [canReorder, reorderStepsMutation]);
-
-  // Fonctions pour le swipe
-  const minSwipeDistance = 50;
-
-  const onTouchStart = useCallback((e: React.TouchEvent) => {
-    setTouchEnd(null);
-    setTouchStart(e.targetTouches[0].clientX);
-  }, []);
-
-  const onTouchMove = useCallback((e: React.TouchEvent) => {
-    setTouchEnd(e.targetTouches[0].clientX);
-  }, []);
-
-  const onTouchEnd = useCallback(() => {
-    if (!touchStart || !touchEnd) return;
-
-    const distance = touchStart - touchEnd;
-    const isLeftSwipe = distance > minSwipeDistance;
-    const isRightSwipe = distance < -minSwipeDistance;
-
-    if (isLeftSwipe) {
-      goToNextStep();
-    }
-    if (isRightSwipe) {
-      goToPreviousStep();
-    }
-  }, [touchStart, touchEnd, goToNextStep, goToPreviousStep]);
-
-  // Options pour le sélecteur de mois
-  const monthOptions = useMemo(() => {
-    const options = [{ value: 'all', label: 'Tous les mois' }];
-    Object.keys(groupedByMonth).forEach(monthKey => {
-      const monthName = monthKey.split('-').map(word =>
-        word.charAt(0).toUpperCase() + word.slice(1)
-      ).join(' ');
-      options.push({ value: monthKey, label: monthName });
-    });
-    return options;
-  }, [groupedByMonth]);
-
-  // Fonction pour basculer l'expansion d'un mois
-  const toggleMonth = (monthKey: string) => {
-    const newExpanded = new Set(expandedMonths);
-    if (newExpanded.has(monthKey)) {
-      newExpanded.delete(monthKey);
-    } else {
-      newExpanded.add(monthKey);
-    }
-    setExpandedMonths(newExpanded);
-  };
-
-  // Fonction pour ouvrir un mois spécifique (utilisée par la carte)
-  const openMonth = (monthKey: string) => {
-    setExpandedMonths(prev => new Set([...prev, monthKey]));
-  };
-
-  // Synchroniser seulement quand on vient de la carte (clic sur marker)
-  useEffect(() => {
-    if (selectedStep && updateSource === 'map') {
-      const stepIndex = mobileFilteredSteps.findIndex(step => step.order === selectedStep.order);
-      if (stepIndex !== -1 && stepIndex !== currentMobileStepIndex) {
-        setCurrentMobileStepIndex(stepIndex);
-      }
-    }
-  }, [selectedStep, mobileFilteredSteps, currentMobileStepIndex, updateSource]);
-
-  // Reset updateSource après chaque mise à jour
-  useEffect(() => {
-    if (updateSource) {
-      const timer = setTimeout(() => setUpdateSource(null), 100);
-      return () => clearTimeout(timer);
-    }
-  }, [updateSource]);
-
-  useEffect(() => {
-    if (currentStep && !selectedStep) {
-      setSelectedStep(currentStep);
-    }
-  }, [currentStep, selectedStep]);
-
-  useEffect(() => {
-    if (!canReorder && isReorderMode) {
-      setIsReorderMode(false);
-    }
-  }, [canReorder, isReorderMode]);
-
-  useEffect(() => {
-    if (!hasInitializedNewStepRef.current) {
-      hasInitializedNewStepRef.current = true;
-      previousStepCountRef.current = sortedDayItineraries.length;
-      return;
-    }
-
-    if (sortedDayItineraries.length > previousStepCountRef.current && sortedDayItineraries.length > 0) {
-      const latestStep = sortedDayItineraries[sortedDayItineraries.length - 1];
-      setSelectedStep(latestStep);
-
-      const newStepDate = new Date(latestStep.date);
-      const newMonthKey = newStepDate
-        .toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })
-        .toLowerCase()
-        .replace(' ', '-');
-
-      setExpandedMonths((prev) => {
-        const next = new Set(prev);
-        next.add(newMonthKey);
-        return next;
-      });
-    }
-
-    previousStepCountRef.current = sortedDayItineraries.length;
-  }, [sortedDayItineraries]);
-
-  useEffect(() => {
-    if (!currentStep) return;
-    const currentDate = new Date(currentStep.date);
-    const currentMonthKey = currentDate
-      .toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })
-      .toLowerCase()
-      .replace(' ', '-');
-
-    setExpandedMonths((prev) => {
-      if (prev.has(currentMonthKey)) {
-        return prev;
-      }
-      const next = new Set(prev);
-      next.add(currentMonthKey);
-      return next;
-    });
-  }, [currentStep]);
-
-  // Scroll automatique vers l'étape sélectionnée quand on clique sur la carte
-  useEffect(() => {
-    if (selectedStep && stepsContainerRef.current) {
-      const stepElement = stepsContainerRef.current.querySelector(
-        `[data-step-order="${selectedStep.order}"]`
-      ) as HTMLElement;
-
-      if (stepElement) {
-        stepElement.scrollIntoView({
-          behavior: 'smooth',
-          block: 'center',
-        });
-      }
-    }
-  }, [selectedStep]);
 
   if (loading || !itinerary || sortedDayItineraries.length === 0) {
     return (
@@ -415,8 +85,8 @@ export default function Home() {
   return (
     <>
       <AddStepDialog
-        isOpen={isAddStepOpen}
-        onRequestClose={() => setIsAddStepOpen(false)}
+        isOpen={itineraryState.isAddStepOpen}
+        onRequestClose={() => itineraryState.setIsAddStepOpen(false)}
         itineraryId={itinerary.id}
         existingDestinations={destinations}
         existingSteps={sortedDayItineraries}
@@ -430,12 +100,12 @@ export default function Home() {
           className="h-full w-full"
           mapStyle={mapStyle}
           onStyleChange={(style) => setMapStyle(style)}
-          selectedStep={selectedStep}
-          onStepSelect={setSelectedStep}
-          onMonthOpen={openMonth}
+          selectedStep={itineraryState.selectedStep}
+          onStepSelect={itineraryState.setSelectedStep}
+          onMonthOpen={itineraryState.openMonth}
         />
 
-        {/* Boutons flottants (style + ajout étape) */}
+        {/* Boutons flottants */}
         <div className="absolute top-4 right-4 z-10 flex flex-col items-end gap-2">
           <MapStyleSelector
             currentStyle={mapStyle}
@@ -446,393 +116,74 @@ export default function Home() {
             variant="default"
             aria-label="Ajouter une étape"
             className="rounded-full shadow-lg"
-            onClick={() => setIsAddStepOpen(true)}
+            onClick={() => itineraryState.setIsAddStepOpen(true)}
           >
             <Plus className="w-4 h-4" />
           </Button>
         </div>
 
-        {/* Bouton flottant desktop bottom-right */}
+        {/* Bouton desktop */}
         <div className="hidden lg:flex absolute bottom-6 right-6 z-10">
           <Button
             size="lg"
             className="shadow-xl"
-            onClick={() => setIsAddStepOpen(true)}
+            onClick={() => itineraryState.setIsAddStepOpen(true)}
           >
             <Plus className="w-4 h-4 mr-2" />
             Ajouter une étape
           </Button>
         </div>
 
-        {/* Bouton mobile pour ajouter une étape */}
+        {/* Bouton mobile */}
         <div className="lg:hidden absolute bottom-5 right-4 z-10">
           <Button
             size="sm"
             className="shadow-lg"
-            onClick={() => setIsAddStepOpen(true)}
+            onClick={() => itineraryState.setIsAddStepOpen(true)}
           >
             <Plus className="w-3 h-3 mr-2" />
             Ajouter une étape
           </Button>
         </div>
 
-        {/* Panel mobile pour navigation par étapes */}
-        <div className="lg:hidden absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-10 max-h-[40vh] overflow-hidden">
-          {/* Header avec sélecteur de mois */}
-          <div className="p-3 border-b border-gray-100">
-            <div className="flex items-center justify-between">
-              <select
-                value={selectedMobileMonth}
-                onChange={(e) => {
-                  setSelectedMobileMonth(e.target.value);
-                  setUpdateSource('mobile');
-                  setCurrentMobileStepIndex(0); // Reset à la première étape du mois sélectionné
-                }}
-                className="text-sm border border-gray-300 rounded px-2 py-1 bg-white"
-              >
-                {monthOptions.map(option => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-              <div className="text-xs text-gray-500">
-                {currentMobileStepIndex + 1} / {mobileFilteredSteps.length}
-              </div>
-            </div>
-          </div>
-
-          {/* Navigation et contenu de l'étape */}
-          <div className="relative">
-            {/* Boutons de navigation */}
-            <div className="absolute left-2 top-1/2 transform -translate-y-1/2 z-10">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={goToPreviousStep}
-                disabled={currentMobileStepIndex === 0}
-                className="bg-white/80 backdrop-blur-sm border border-gray-200 shadow-sm disabled:opacity-50"
-              >
-                ‹
-              </Button>
-            </div>
-            <div className="absolute right-2 top-1/2 transform -translate-y-1/2 z-10">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={goToNextStep}
-                disabled={currentMobileStepIndex >= mobileFilteredSteps.length - 1}
-                className="bg-white/80 backdrop-blur-sm border border-gray-200 shadow-sm disabled:opacity-50"
-              >
-                ›
-              </Button>
-            </div>
-
-            {/* Contenu de l'étape */}
-            <div
-              className="px-4 py-3 overflow-y-auto max-h-[25vh]"
-              onTouchStart={onTouchStart}
-              onTouchMove={onTouchMove}
-              onTouchEnd={onTouchEnd}
-            >
-              {currentMobileStep && (
-                <div className="space-y-3">
-                  {/* Étape actuelle */}
-                  <div className="transition-opacity duration-300 ease-in-out">
-                    <ItineraryCard
-                      dayItinerary={currentMobileStep}
-                      isSelected={selectedStep?.order === currentMobileStep.order}
-                      isPast={isBefore(parseISO(currentMobileStep.date), clientCurrentDate)}
-                      onSelect={() => setSelectedStep(currentMobileStep)}
-                    />
-                  </div>
-
-                  {/* Indicateur de progression et instructions */}
-                  <div className="flex flex-col items-center space-y-2">
-                    {/* Petit rond avec GIF au-dessus de l'étape actuelle (date) */}
-                    <div className="flex justify-center">
-                      {mobileFilteredSteps.slice(0, Math.min(10, mobileFilteredSteps.length)).map((_, index) => (
-                        <div key={`gif-${index}`} className="flex flex-col items-center mx-0.5">
-                          {index === currentDateStepIndex && currentDateStepIndex !== -1 && (
-                            <div className="w-3 h-3 rounded-full bg-white border border-gray-300 flex items-center justify-center mb-1">
-                              <Image
-                                src="/current-step.gif"
-                                alt="Étape actuelle"
-                                width={8}
-                                height={8}
-                                className="w-2 h-2 object-contain"
-                              />
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* Indicateurs de progression */}
-                    <div className="flex space-x-1">
-                      {mobileFilteredSteps.slice(0, Math.min(10, mobileFilteredSteps.length)).map((_, index) => (
-                        index === currentMobileStepIndex ? (
-                          <div
-                            key={index}
-                            className="w-2 h-2 rounded-full bg-black"
-                          />
-                        ) : (
-                          <div
-                            key={index}
-                            className="w-2 h-2 rounded-full bg-gray-300"
-                          />
-                        )
-                      ))}
-                      {mobileFilteredSteps.length > 10 && (
-                        <div className="text-xs text-gray-500 ml-2">
-                          +{mobileFilteredSteps.length - 10} autres
-                        </div>
-                      )}
-                    </div>
-                    <div className="text-xs text-gray-400 text-center space-y-1">
-                      <div>👆 Glissez pour naviguer entre les étapes</div>
-                      <div className="text-[10px] opacity-75">
-                        📅 Aujourd&apos;hui : {formatDate(clientCurrentDate)}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+        {/* Panel mobile */}
+        <MobilePanel
+          currentMobileStep={mobileNav.currentMobileStep}
+          selectedStep={itineraryState.selectedStep}
+          mobileFilteredSteps={mobileNav.mobileFilteredSteps}
+          currentMobileStepIndex={mobileNav.currentMobileStepIndex}
+          selectedMobileMonth={mobileNav.selectedMobileMonth}
+          monthOptions={mobileNav.monthOptions}
+          currentDateStepIndex={mobileNav.currentDateStepIndex}
+          itineraryId={itinerary.id}
+          onSelectStep={itineraryState.setSelectedStep}
+          onDeleteStep={itineraryState.handleDeleteStep}
+          onMobileMonthChange={mobileNav.handleMobileMonthChange}
+          onTouchStart={mobileNav.onTouchStart}
+          onTouchMove={mobileNav.onTouchMove}
+          onTouchEnd={mobileNav.onTouchEnd}
+          goToNextStep={mobileNav.goToNextStep}
+          goToPreviousStep={mobileNav.goToPreviousStep}
+        />
       </div>
 
-      {/* Panel d'information - En bas sur mobile, gauche sur desktop */}
-      <div className="hidden lg:flex lg:w-80 bg-white lg:border-r border-gray-200 flex-col order-2 lg:order-1 lg:h-full">
-
-        {/* Contenu du panel */}
-        <div className="flex-1 p-4 space-y-4 overflow-y-auto">
-          {/* Titre de l'itinéraire */}
-          <AppHeader
-            title={itinerary.title}
-            description={itinerary.description}
-            startDate={formatDate(itinerary.startDate)}
-            endDate={formatDate(itinerary.endDate)}
-          />
-
-          {/* Étapes de l'itinéraire */}
-          <div ref={stepsContainerRef} className="space-y-3">
-            <div className="flex items-start justify-between gap-2">
-              <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-                🗺️ Étapes ({Object.values(groupedByMonth).flat().length})
-              </h3>
-              <Button
-                variant={isReorderMode ? 'secondary' : 'outline'}
-                size="sm"
-                onClick={() => {
-                  if (!canReorder) {
-                    setReorderError("Impossible de réordonner tant que toutes les étapes ne sont pas synchronisées.");
-                    return;
-                  }
-                  setIsReorderMode((prev) => !prev);
-                  setReorderError(null);
-                }}
-                disabled={!canReorder}
-              >
-                {isReorderMode ? 'Terminer' : 'Réorganiser'}
-              </Button>
-            </div>
-
-            {!canReorder && (
-              <div className="rounded border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
-                Les étapes doivent être synchronisées avec Convex avant de pouvoir être réorganisées.
-              </div>
-            )}
-
-            {reorderError && (
-              <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-600">
-                {reorderError}
-              </div>
-            )}
-
-            {isReorderMode ? (
-              <StepReorderList
-                steps={sortedDayItineraries}
-                onReorder={handleReorder}
-                onCancel={() => setIsReorderMode(false)}
-                isSubmitting={isSavingOrder}
-              />
-            ) : (
-              Object.entries(groupedByMonth).map(([monthKey, monthDays]) => {
-                const isExpanded = expandedMonths.has(monthKey);
-                const monthName = monthKey.split('-').map(word =>
-                  word.charAt(0).toUpperCase() + word.slice(1)
-                ).join(' ');
-
-                return (
-                  <div key={monthKey} className="space-y-2">
-                    {/* Header du mois cliquable */}
-                    <button
-                      onClick={() => toggleMonth(monthKey)}
-                      className="w-full flex items-center justify-between p-2 bg-gray-50 border border-gray-200 rounded-md hover:bg-gray-100 transition-colors group"
-                    >
-                      <div className="flex items-center gap-2">
-                        <Calendar className="w-4 h-4 text-gray-600" />
-                        <span className="font-medium text-gray-900 text-sm">{monthName}</span>
-                        <span className="text-xs text-gray-600 bg-white px-1.5 py-0.5 rounded border">
-                          {monthDays.length}
-                        </span>
-                      </div>
-                      {isExpanded ? (
-                        <ChevronUp className="w-4 h-4 text-gray-600 group-hover:text-gray-900 transition-colors" />
-                      ) : (
-                        <ChevronDown className="w-4 h-4 text-gray-600 group-hover:text-gray-900 transition-colors" />
-                      )}
-                    </button>
-
-                    {/* Étapes du mois */}
-                    {isExpanded && (
-                      <div className="space-y-2 ml-3 border-l border-gray-300 pl-3">
-                        {monthDays.map((stepGroup) => {
-                          if (stepGroup.type === 'single') {
-                            // Étape unique
-                            const day = stepGroup.day;
-                            const dayDate = parseISO(day.date);
-                            dayDate.setHours(0, 0, 0, 0);
-                            const isPastStep = isBefore(dayDate, clientCurrentDate);
-                            return (
-                              <div key={day.date} data-step-order={day.order}>
-                                <ItineraryCard
-                                  dayItinerary={day}
-                                  isSelected={selectedStep?.order === day.order}
-                                  isPast={isPastStep}
-                                  onSelect={() => setSelectedStep(day)}
-                                />
-                              </div>
-                            );
-                          } else {
-                            // Plage d'étapes consécutives
-                            const { days, startDate, endDate, destination } = stepGroup;
-                            const isRangeSelected = selectedStep && days.some(day => day.order === selectedStep.order);
-                            const isRangeCurrent = currentStep && days.some(day => day.order === currentStep.order);
-
-                            return (
-                              <div key={`range-${days[0].order}-${days[days.length - 1].order}`}>
-                                <div className={`border rounded-md overflow-hidden transition-colors ${
-                                  isRangeSelected
-                                    ? 'bg-blue-50 border-blue-300'
-                                    : 'bg-white border-gray-200'
-                                }`}>
-                                  {/* En-tête de la plage */}
-                                  <button
-                                    onClick={() => {
-                                      // Sélectionner la première étape de la plage
-                                      setSelectedStep(days[0]);
-                                    }}
-                                    className={`w-full p-3 text-left transition-colors ${
-                                      isRangeSelected
-                                        ? 'hover:bg-blue-100'
-                                        : 'hover:bg-gray-50'
-                                    }`}
-                                  >
-                                    <div className="flex items-center justify-between">
-                                      <div className="flex items-center gap-2">
-                                        <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center text-xs font-medium text-gray-700">
-                                          {days.length}
-                                        </div>
-                                        <div>
-                                          <h4 className="font-medium text-gray-900 text-sm">{destination.name}</h4>
-                                          <p className="text-xs text-gray-500">
-                                            {formatDate(startDate)}
-                                            {startDate.getTime() !== endDate.getTime() &&
-                                              ` - ${formatDate(endDate)}`
-                                            }
-                                            {isRangeCurrent && (
-                                              <span className="ml-2 inline-block px-1.5 py-0.5 bg-green-100 text-green-800 text-[10px] rounded font-medium">
-                                                ACTUEL
-                                              </span>
-                                            )}
-                                          </p>
-                                        </div>
-                                      </div>
-                                      <div className="flex items-center gap-1">
-                                        <ChevronDown className="w-4 h-4 text-gray-500" />
-                                      </div>
-                                    </div>
-                                  </button>
-
-                                  {/* Détails des étapes individuelles */}
-                                  <div className="border-t border-white/30">
-                                    {days.map((day) => (
-                                      <div key={day.date} className="px-3 py-2 border-b border-gray-100 last:border-b-0">
-                                        <div className="flex items-center justify-between">
-                                          <div className="flex items-center gap-2">
-                                            <div className={`w-2 h-2 rounded-full ${
-                                              currentStep && currentStep.order === day.order ? 'bg-green-500' :
-                                              selectedStep && selectedStep.order === day.order ? 'bg-blue-500' : 'bg-gray-300'
-                                            }`}></div>
-                                            <span className="text-xs text-gray-600">
-                                              Jour {day.order}
-                                            </span>
-                                            <span className="text-xs text-gray-500">
-                                              {formatDate(day.date)}
-                                            </span>
-                                            {currentStep && currentStep.order === day.order && (
-                                              <span className="text-[10px] px-1 py-0.5 bg-green-100 text-green-800 rounded font-medium">
-                                                Today
-                                              </span>
-                                            )}
-                                          </div>
-                                          <button
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              setSelectedStep(day);
-                                            }}
-                                            className="text-xs text-blue-600 hover:text-blue-800 underline"
-                                          >
-                                            Voir détails
-                                          </button>
-                                        </div>
-                                        {selectedStep && selectedStep.order === day.order && (
-                                          <div className="mt-2 pt-2 border-t border-gray-100">
-                                            <ItineraryCard
-                                              dayItinerary={day}
-                                              isSelected={true}
-                                              isPast={isBefore(parseISO(day.date), clientCurrentDate)}
-                                              onSelect={() => {}}
-                                            />
-                                          </div>
-                                        )}
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              </div>
-                            );
-                          }
-                        })}
-                      </div>
-                    )}
-                  </div>
-                );
-              })
-            )}
-          </div>
-
-          {/* Boutons d'action en bas */}
-          <div className="space-y-3 pt-2">
-            <div className="flex justify-center">
-              <ThemeSelector />
-            </div>
-            <Button
-              className="w-full h-8 text-sm"
-              onClick={() => setIsAddStepOpen(true)}
-            >
-              <Plus className="w-3 h-3 mr-2" />
-              Ajouter une étape
-            </Button>
-            <Button variant="outline" className="w-full h-8 text-sm">
-              Exporter PDF
-            </Button>
-          </div>
-        </div>
-      </div>
+        {/* Panel latéral desktop */}
+        <SidebarPanel
+          itinerary={itinerary}
+          groupedByMonth={groupedByMonth}
+          expandedMonths={itineraryState.expandedMonths}
+          selectedStep={itineraryState.selectedStep}
+          isReorderMode={itineraryState.isReorderMode}
+          canReorder={canReorder}
+          reorderError={itineraryState.reorderError}
+          isSavingOrder={itineraryState.isSavingOrder}
+          onToggleMonth={itineraryState.toggleMonth}
+          onSelectStep={itineraryState.setSelectedStep}
+          onDeleteStep={itineraryState.handleDeleteStep}
+          onToggleReorderMode={() => itineraryState.setIsReorderMode(!itineraryState.isReorderMode)}
+          onReorder={itineraryState.handleReorder}
+          onOpenAddStep={() => itineraryState.setIsAddStepOpen(true)}
+        />
 
       </div>
     </>

@@ -4,13 +4,15 @@ export interface Coordinates {
 }
 
 export interface Destination {
-  id: string;
+  id: number;
   name: string;
   description?: string;
   coordinates: Coordinates;
   address?: string;
   imageUrl?: string;
   category?: string; // hotel, restaurant, attraction, etc.
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Activity {
@@ -50,18 +52,22 @@ export interface BikeSegmentDetails {
 }
 
 export interface DayItinerary {
-  id?: string;
+  id?: number;
+  itineraryId: number;
   date: string; // ISO date string
+  destinationId: number;
   destination: Destination; // Destination principale du jour
   activities: Activity[];
   notes?: string;
   order: number; // Ordre dans l'itinéraire
   transportToNext?: TransportSegment; // Transport vers l'étape suivante
   bikeSegment?: BikeSegmentDetails; // Détails spécifiques aux étapes vélo
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Itinerary {
-  id: string;
+  id: number;
   title: string;
   description?: string;
   startDate: string;

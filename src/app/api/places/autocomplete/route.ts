@@ -5,7 +5,7 @@ const MAPBOX_ENDPOINT = 'https://api.mapbox.com/geocoding/v5/mapbox.places';
 const DEFAULT_TYPES = ['place', 'locality', 'poi', 'region', 'address'];
 
 function getToken() {
-  return process.env.MAPBOX_GEOCODING_ACCESS_TOKEN || process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
+  return process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
 }
 
 function extractSecondaryText(primary: string, placeName: string | undefined) {
@@ -25,7 +25,7 @@ export async function POST(request: Request) {
 
   if (!token) {
     return NextResponse.json(
-      { error: 'Missing Mapbox access token. Set MAPBOX_GEOCODING_ACCESS_TOKEN or NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN.' },
+      { error: 'Missing Mapbox access token. Set NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN.' },
       { status: 500 },
     );
   }

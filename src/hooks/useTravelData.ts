@@ -1,10 +1,8 @@
 'use client';
 
 import { useMemo } from 'react';
-import { useQuery } from 'convex/react';
+import { useItineraries, useDestinations, useSteps } from './useTravelQueries';
 import type { Destination, DayItinerary, Itinerary } from '@/types/travel';
-import type { Doc } from '../../convex/_generated/dataModel';
-import { api } from '../../convex/_generated/api';
 
 interface UseTravelDataResult {
   loading: boolean;
@@ -13,42 +11,41 @@ interface UseTravelDataResult {
   itinerary: Itinerary | null;
 }
 
-function mapDestination(doc: Doc<'destinations'>): Destination {
+function mapDestination(doc: Destination): Destination {
   return {
-    id: doc._id,
+    id: doc.id,
     name: doc.name,
-    description: doc.description ?? undefined,
+    description: doc.description,
     coordinates: doc.coordinates,
-    address: doc.address ?? undefined,
-    category: doc.category ?? undefined,
+    address: doc.address,
+    category: doc.category,
+    createdAt: doc.createdAt,
+    updatedAt: doc.updatedAt,
   };
 }
 
 export function useTravelData(): UseTravelDataResult {
-  const destinationDocs = useQuery(api.destinations.list);
-  const itineraryDocs = useQuery(api.itineraries.list);
+  const destinationsQuery = useDestinations();
+  const itinerariesQuery = useItineraries();
 
-  const selectedItinerary = itineraryDocs?.[0] ?? null;
+  const selectedItinerary = itinerariesQuery.data?.[0] ?? null;
 
-  const stepDocs = useQuery(
-    api.steps.listByItinerary,
-    selectedItinerary ? { itineraryId: selectedItinerary._id } : 'skip'
-  );
+  const stepsQuery = useSteps(selectedItinerary?.id);
 
   return useMemo(() => {
-    if (!destinationDocs || !selectedItinerary || !stepDocs) {
+    if (!destinationsQuery.data || !selectedItinerary || !stepsQuery.data) {
       return {
-        loading: true,
+        loading: destinationsQuery.isLoading || itinerariesQuery.isLoading || stepsQuery.isLoading,
         destinations: [],
         dayItineraries: [],
         itinerary: null,
       };
     }
 
-    const destinations = destinationDocs.map(mapDestination);
+    const destinations = destinationsQuery.data.map(mapDestination);
     const destinationMap = new Map(destinations.map((destination) => [destination.id, destination]));
 
-    const dayItineraries: DayItinerary[] = stepDocs
+    const dayItineraries: DayItinerary[] = stepsQuery.data
       .map((step) => {
         const destination = destinationMap.get(step.destinationId);
         if (!destination) {
@@ -56,31 +53,35 @@ export function useTravelData(): UseTravelDataResult {
         }
 
         return {
-          id: step._id,
+          id: step.id,
+          itineraryId: step.itineraryId,
           date: step.date,
+          destinationId: step.destinationId,
           destination,
           activities: step.activities,
-          notes: step.notes ?? undefined,
+          notes: step.notes,
           order: step.order,
-          transportToNext: step.transportToNext ?? undefined,
-          bikeSegment: step.bikeSegment ?? undefined,
+          transportToNext: step.transportToNext,
+          bikeSegment: step.bikeSegment,
+          createdAt: step.createdAt,
+          updatedAt: step.updatedAt,
         } satisfies DayItinerary;
       })
       .filter((value): value is DayItinerary => value !== null)
       .sort((a, b) => a.order - b.order);
 
     const itinerary: Itinerary = {
-      id: selectedItinerary._id,
+      id: selectedItinerary.id,
       title: selectedItinerary.title,
-      description: selectedItinerary.description ?? undefined,
+      description: selectedItinerary.description,
       startDate: selectedItinerary.startDate,
       endDate: selectedItinerary.endDate,
       destinations,
       days: dayItineraries,
-      totalBudget: selectedItinerary.totalBudget ?? undefined,
-      currency: selectedItinerary.currency ?? undefined,
-      createdAt: new Date(selectedItinerary._creationTime).toISOString(),
-      updatedAt: new Date(selectedItinerary._creationTime).toISOString(),
+      totalBudget: selectedItinerary.totalBudget,
+      currency: selectedItinerary.currency,
+      createdAt: selectedItinerary.createdAt,
+      updatedAt: selectedItinerary.updatedAt,
     };
 
     return {
@@ -89,5 +90,5 @@ export function useTravelData(): UseTravelDataResult {
       dayItineraries,
       itinerary,
     };
-  }, [destinationDocs, selectedItinerary, stepDocs]);
+  }, [destinationsQuery.data, selectedItinerary, stepsQuery.data, destinationsQuery.isLoading, itinerariesQuery.isLoading, stepsQuery.isLoading]);
 }

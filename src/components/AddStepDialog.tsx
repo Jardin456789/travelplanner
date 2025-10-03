@@ -1,10 +1,10 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useMutation } from 'convex/react';
-import { api } from '../../convex/_generated/api';
 import { DayItinerary, Destination } from '@/types/travel';
 import { Button } from './ui/button';
+import { useUpdateStep, useCreateDestination } from '@/hooks/useTravelQueries';
+import { DEBOUNCE_TIMES } from '@/lib/query-config';
 
 type PlaceSuggestion = {
   placeId: string;
@@ -27,13 +27,11 @@ type PlaceDetails = {
 type AddStepDialogProps = {
   isOpen: boolean;
   onRequestClose: () => void;
-  itineraryId: string;
+  itineraryId: number;
   existingDestinations: Destination[];
   existingSteps: DayItinerary[];
-  onStepCreated?: (stepId: string) => void;
+  onStepCreated?: (stepId: number) => void;
 };
-
-const AUTOCOMPLETE_DEBOUNCE_MS = 250;
 
 export function AddStepDialog({
   isOpen,
@@ -54,8 +52,9 @@ export function AddStepDialog({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const languageCode: 'fr' | 'en' = 'fr';
 
-  const upsertDestination = useMutation(api.destinations.upsert);
-  const upsertStep = useMutation(api.steps.upsertStep);
+  // Utiliser les hooks de mutation React Query
+  const updateStepMutation = useUpdateStep();
+  const createDestinationMutation = useCreateDestination();
 
   const conflictingStep = useMemo(() => {
     if (!formDate) {
@@ -120,7 +119,7 @@ export function AddStepDialog({
       } finally {
         setIsLoadingSuggestions(false);
       }
-  }, AUTOCOMPLETE_DEBOUNCE_MS);
+  }, DEBOUNCE_TIMES.AUTOCOMPLETE);
 
     return () => window.clearTimeout(timeout);
   }, [searchQuery, languageCode]);
@@ -199,15 +198,16 @@ export function AddStepDialog({
 
       const destinationId = existingDestination
         ? existingDestination.id
-        : await upsertDestination({
+        : (await createDestinationMutation.mutateAsync({
             name: selectedPlace.name || searchQuery,
             description: undefined,
             coordinates: selectedPlace.coordinates,
             address: selectedPlace.formattedAddress || undefined,
             category: selectedPlace.types?.[0] ?? undefined,
-          });
+          })).id;
 
-      const stepId = await upsertStep({
+      // Utiliser la mutation React Query pour créer l'étape
+      const result = await updateStepMutation.mutateAsync({
         itineraryId,
         date: formDate,
         destinationId,
@@ -216,7 +216,7 @@ export function AddStepDialog({
         activities: [],
       });
 
-      onStepCreated?.(stepId);
+      onStepCreated?.(result.id);
       resetForm();
       onRequestClose();
     } catch (error) {
@@ -240,8 +240,8 @@ export function AddStepDialog({
     resetForm,
     onRequestClose,
     searchQuery,
-    upsertDestination,
-    upsertStep,
+    createDestinationMutation,
+    updateStepMutation,
     conflictingStep,
   ]);
 

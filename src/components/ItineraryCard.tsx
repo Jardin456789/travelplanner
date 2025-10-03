@@ -2,112 +2,208 @@
 
 import { useState } from 'react';
 import { DayItinerary } from '@/types/travel';
-import { ChevronDown, ChevronUp, Clock, MapPin, CheckCircle } from 'lucide-react';
+import { useDeleteStep } from '@/hooks/useTravelQueries';
+import { 
+  ChevronDown, 
+  Calendar, 
+  MapPin, 
+  Check, 
+  Trash2, 
+  Plane, 
+  Bus, 
+  Bike,
+  Clock,
+  StickyNote
+} from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { formatDate } from '@/lib/date-utils';
+import { Button } from '@/components/ui/button';
 
 interface ItineraryCardProps {
   dayItinerary: DayItinerary;
+  itineraryId: number;
   isSelected?: boolean;
   isPast?: boolean;
   onSelect?: () => void;
+  onDelete?: () => void;
 }
 
-export default function ItineraryCard({ dayItinerary, isSelected = false, isPast = false, onSelect }: ItineraryCardProps) {
+export default function ItineraryCard({ dayItinerary, itineraryId, isSelected = false, isPast = false, onSelect, onDelete }: ItineraryCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
+  const deleteStepMutation = useDeleteStep();
   const formattedDate = formatDate(dayItinerary.date);
 
+  const handleDelete = async (e: React.MouseEvent) => {
+    e.stopPropagation(); // Empêche la propagation pour ne pas déclencher onSelect
+    if (dayItinerary.id && window.confirm('Êtes-vous sûr de vouloir supprimer cette étape ?')) {
+      try {
+        await deleteStepMutation.mutateAsync(dayItinerary.id);
+        onDelete?.();
+      } catch (error) {
+        console.error('Erreur lors de la suppression:', error);
+        alert('Erreur lors de la suppression de l\'étape');
+      }
+    }
+  };
+
   return (
-    <div className={`border rounded-md overflow-hidden transition-colors ${
-      isSelected
-        ? 'bg-blue-50 border-blue-300'
-        : isPast
-        ? 'bg-green-50 border-green-300'
-        : 'bg-white border-gray-200'
-    }`}>
-      {/* En-tête compact - toujours visible */}
+    <div 
+      className={`group relative rounded-lg border transition-all duration-200 ${
+        isSelected
+          ? 'bg-blue-50/30 border-blue-200/50 shadow-sm shadow-blue-100/20'
+          : isPast
+          ? 'bg-green-50/20 border-green-200/40'
+          : 'bg-white border-gray-100 hover:border-gray-200 hover:shadow-sm'
+      }`}
+    >
+      {/* Indicateur de statut */}
+      {isPast && (
+        <div className="absolute -left-1 top-4 h-8 w-1 rounded-r-full bg-emerald-400/60" />
+      )}
+
+      {/* En-tête */}
       <button
         onClick={() => {
           setIsExpanded(!isExpanded);
           onSelect?.();
         }}
-        className={`w-full p-3 text-left transition-colors ${
-          isSelected
-            ? 'hover:bg-blue-100'
-            : 'hover:bg-gray-50'
-        }`}
+        className="w-full p-4 text-left"
       >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className={`hidden lg:block w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex items-start gap-3 flex-1 min-w-0">
+            {/* Badge numéro */}
+            <div className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-medium transition-colors ${
               isPast
-                ? 'bg-green-500 text-white'
-                : 'bg-gray-200 text-gray-700'
+                ? 'bg-emerald-100/60 text-emerald-700 ring-1 ring-emerald-200/50'
+                : isSelected
+                ? 'bg-blue-100/60 text-blue-700 ring-1 ring-blue-200/50'
+                : 'bg-gray-50 text-gray-600 ring-1 ring-gray-200/50'
             }`}>
-              {isPast ? <CheckCircle className="w-4 h-4" /> : dayItinerary.order}
+              {isPast ? <Check className="h-3.5 w-3.5" /> : dayItinerary.order}
             </div>
-            <div>
-              <h4 className="font-medium text-gray-900 text-sm">{dayItinerary.destination?.name || 'Destination inconnue'}</h4>
-              <p className="text-xs text-gray-500">{formattedDate}</p>
+
+            {/* Contenu principal */}
+            <div className="flex-1 min-w-0 space-y-1">
+              <h4 className="font-semibold text-sm leading-none tracking-tight truncate text-gray-800">
+                {dayItinerary.destination?.name || 'Destination inconnue'}
+              </h4>
+              <div className="flex items-center gap-2 text-xs text-gray-500">
+                <Calendar className="h-3 w-3" />
+                <time>{formattedDate}</time>
+              </div>
             </div>
           </div>
-          <div className="flex items-center gap-1">
-            {isExpanded ? (
-              <ChevronUp className="w-4 h-4 text-gray-500" />
-            ) : (
-              <ChevronDown className="w-4 h-4 text-gray-500" />
+
+          {/* Actions */}
+          <div className="flex items-center gap-1 shrink-0">
+            {dayItinerary.id && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 text-gray-400 hover:text-red-500 hover:bg-red-50/50"
+                onClick={handleDelete}
+                title="Supprimer"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </Button>
             )}
+            <ChevronDown 
+              className={`h-4 w-4 text-gray-400 transition-transform duration-200 ${
+                isExpanded ? 'rotate-180' : ''
+              }`} 
+            />
           </div>
         </div>
       </button>
 
-      {/* Contenu détaillé - visible seulement si expanded */}
+      {/* Contenu détaillé */}
       {isExpanded && (
-        <div className="px-4 pb-4 border-t border-white/30">
-          {/* Date précise */}
-          <div className="bg-gray-50 rounded-lg p-3 mt-3 border border-gray-200">
-            <div className="flex items-center gap-2 text-sm text-gray-700">
-              <span className="font-medium">📅 Date :</span>
-              <span>{formattedDate}</span>
-            </div>
-          </div>
-
-          {/* Notes du jour */}
+        <div className="border-t border-gray-100 px-4 pt-4 pb-4 space-y-4 bg-gray-50/30">
+          {/* Notes */}
           {dayItinerary.notes && (
-            <div className="bg-blue-50/80 backdrop-blur-sm rounded-lg p-3 mt-3 border border-blue-100/50">
-              <p className="text-sm text-blue-800">{dayItinerary.notes}</p>
+            <div className="flex gap-3 p-3 rounded-lg bg-white border border-gray-100">
+              <StickyNote className="h-4 w-4 text-gray-400 shrink-0 mt-0.5" />
+              <p className="text-sm text-gray-600 leading-relaxed">
+                {dayItinerary.notes}
+              </p>
+            </div>
+          )}
+
+          {/* Transport */}
+          {dayItinerary.transportToNext?.type && (
+            <div className="rounded-lg border border-gray-100 bg-white p-3">
+              <div className="flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-50 border border-gray-200">
+                  {dayItinerary.transportToNext.type === 'plane' && <Plane className="h-4 w-4 text-gray-600" />}
+                  {dayItinerary.transportToNext.type === 'bus' && <Bus className="h-4 w-4 text-gray-600" />}
+                  {dayItinerary.transportToNext.type === 'bike' && <Bike className="h-4 w-4 text-gray-600" />}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium capitalize text-gray-700">
+                    {dayItinerary.transportToNext.type === 'plane' ? 'Avion' :
+                     dayItinerary.transportToNext.type === 'bus' ? 'Bus' : 'Vélo'}
+                  </p>
+                  {dayItinerary.transportToNext.duration && (
+                    <p className="text-xs text-gray-500">
+                      {dayItinerary.transportToNext.duration}
+                    </p>
+                  )}
+                </div>
+              </div>
             </div>
           )}
 
           {/* Activités */}
-          <div className="space-y-2 mt-3">
-            {dayItinerary.activities.map((activity) => (
-              <div key={activity.id} className="bg-white/60 backdrop-blur-sm rounded-lg p-3 border border-white/30">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <h5 className="font-medium text-black text-sm">{activity.title}</h5>
-                    <p className="text-xs text-gray-600 mt-1">{activity.description}</p>
-                    <div className="flex items-center gap-2 mt-2">
-                      <div className="flex items-center gap-1 text-xs text-gray-500">
-                        <Clock className="w-3 h-3" />
-                        <span>{activity.startTime} - {activity.endTime}</span>
-                      </div>
+          {dayItinerary.activities.length > 0 && (
+            <div className="space-y-2">
+              <h5 className="text-xs font-medium uppercase tracking-wider text-gray-400 px-1">
+                Activités
+              </h5>
+              <div className="space-y-2">
+                {dayItinerary.activities.map((activity) => (
+                  <div 
+                    key={activity.id} 
+                    className="rounded-lg border border-gray-100 bg-white p-3 space-y-2 hover:bg-gray-50/50 transition-colors"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <h6 className="text-sm font-medium leading-tight flex-1 text-gray-800">
+                        {activity.title}
+                      </h6>
                       {activity.category && (
-                        <Badge variant="secondary" className="text-xs">
+                        <Badge variant="secondary" className="text-xs shrink-0 bg-gray-100 text-gray-600 border-gray-200">
                           {activity.category}
                         </Badge>
                       )}
                     </div>
+
+                    {activity.description && (
+                      <p className="text-xs text-gray-600 leading-relaxed">
+                        {activity.description}
+                      </p>
+                    )}
+
+                    <div className="flex items-center gap-3 text-xs text-gray-500">
+                      {(activity.startTime || activity.endTime) && (
+                        <div className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          <span>
+                            {activity.startTime && activity.endTime 
+                              ? `${activity.startTime} - ${activity.endTime}`
+                              : activity.startTime || activity.endTime}
+                          </span>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-1">
+                        <MapPin className="h-3 w-3" />
+                        <span>{dayItinerary.destination?.name || 'Destination inconnue'}</span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex items-center text-xs text-gray-500">
-                    <MapPin className="w-3 h-3 mr-1" />
-                    <span>{dayItinerary.destination?.name || 'Destination inconnue'}</span>
-                  </div>
-                </div>
+                ))}
               </div>
-            ))}
-          </div>
+            </div>
+          )}
         </div>
       )}
     </div>

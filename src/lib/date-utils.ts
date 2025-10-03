@@ -24,19 +24,26 @@ export const formatDate = (date: Date | string): string => {
 
 // Hook personnalisé pour la date actuelle
 export const useCurrentDate = () => {
-  const [currentDate, setCurrentDate] = useState(() => getCurrentDate());
+  const [currentDate, setCurrentDate] = useState<Date | null>(null);
 
   useEffect(() => {
-    // Mettre à jour la date toutes les heures pour gérer les changements de jour
+    // Initialiser la date côté client uniquement (évite les hydration mismatches)
+    setCurrentDate(getCurrentDate());
+
+    // Mettre à jour la date toutes les minutes pour détecter rapidement les changements
     const interval = setInterval(() => {
       const newDate = getCurrentDate();
-      if (newDate.getTime() !== currentDate.getTime()) {
-        setCurrentDate(newDate);
-      }
-    }, 3600000); // 1 heure
+      setCurrentDate(prevDate => {
+        if (!prevDate || newDate.getTime() !== prevDate.getTime()) {
+          console.log('📅 Date actuelle mise à jour:', newDate.toLocaleDateString('fr-FR'));
+          return newDate;
+        }
+        return prevDate;
+      });
+    }, 60000); // 1 minute (plus réactif)
 
     return () => clearInterval(interval);
-  }, [currentDate]);
+  }, []);
 
-  return currentDate;
+  return currentDate || getCurrentDate();
 };
