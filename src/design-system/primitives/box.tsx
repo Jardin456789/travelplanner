@@ -51,7 +51,7 @@ export interface BoxProps
 }
 
 const Box = React.forwardRef<HTMLDivElement, BoxProps>(
-  ({ className, display, position, overflow, cursor, asChild, as, ...props }, ref) => {
+  ({ className, display, position, overflow, cursor, as, ...props }, ref) => {
     const Comp = as || 'div';
 
     return (

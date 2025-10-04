@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
-import { typography } from '../tokens/typography';
 
 const textVariants = cva('', {
   variants: {
@@ -181,7 +180,6 @@ const Text = React.forwardRef<HTMLSpanElement, TextProps>(
     whiteSpace,
     truncate,
     variant,
-    asChild,
     as,
     ...props
   }, ref) => {

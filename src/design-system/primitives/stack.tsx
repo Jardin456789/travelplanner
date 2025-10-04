@@ -127,7 +127,6 @@ const Stack = React.forwardRef<HTMLDivElement, StackProps>(
     columns,
     rows,
     flow,
-    asChild,
     as,
     ...props
   }, ref) => {

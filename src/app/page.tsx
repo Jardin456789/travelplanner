@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { useCurrentDate } from '@/lib/date-utils';
 import { parseISO, isBefore, isEqual } from 'date-fns';
 import dynamic from 'next/dynamic';

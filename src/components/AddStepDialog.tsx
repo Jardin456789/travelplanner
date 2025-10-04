@@ -216,7 +216,9 @@ export function AddStepDialog({
         activities: [],
       });
 
-      onStepCreated?.(result.id);
+      if (typeof result.id === 'number') {
+        onStepCreated?.(result.id);
+      }
       resetForm();
       onRequestClose();
     } catch (error) {

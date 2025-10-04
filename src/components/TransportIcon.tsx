@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { TransportSegment, DayItinerary, TransportType } from '@/types/travel';
+import { DayItinerary, TransportType } from '@/types/travel';
 import { Plane, Bus, Bike, Car } from 'lucide-react';
 import { toast } from '@/components/ui/toaster';
 import { useUpdateStep } from '@/hooks/useTravelQueries';

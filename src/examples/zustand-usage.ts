@@ -8,7 +8,7 @@ import { useItineraryStore } from '@/stores/itineraryStore';
 export function useCurrentItineraryState() {
   const { currentItinerary, setCurrentItinerary } = useItineraryStore();
 
-  const selectItinerary = (itineraryId: string) => {
+  const selectItinerary = () => {
     // Ici on pourrait fetch l'itinéraire depuis TanStack Query
     // puis mettre à jour le store
     setCurrentItinerary(fetchedItinerary);
@@ -106,7 +106,7 @@ export function useReorderItinerary() {
       // 3. Notification de succès
       toast.success('Ordre des étapes mis à jour');
 
-    } catch (error) {
+    } catch {
       // 4. Rollback en cas d'erreur
       if (currentItinerary) {
         reorderSteps(currentItinerary.days);

@@ -35,12 +35,10 @@ export default function SidebarPanel({
   isReorderMode,
   canReorder,
   reorderError,
-  isSavingOrder,
   onToggleMonth,
   onSelectStep,
   onDeleteStep,
   onToggleReorderMode,
-  onReorder,
   onOpenAddStep,
 }: SidebarPanelProps) {
   const clientCurrentDate = useCurrentDate();

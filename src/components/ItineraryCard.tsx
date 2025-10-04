@@ -28,7 +28,7 @@ interface ItineraryCardProps {
   onDelete?: () => void;
 }
 
-export default function ItineraryCard({ dayItinerary, itineraryId, isSelected = false, isPast = false, onSelect, onDelete }: ItineraryCardProps) {
+export default function ItineraryCard({ dayItinerary, isSelected = false, isPast = false, onSelect, onDelete }: ItineraryCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   const deleteStepMutation = useDeleteStep();

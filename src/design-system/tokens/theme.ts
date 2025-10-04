@@ -3,7 +3,7 @@
  * CSS custom properties for light and dark themes
  */
 
-import { colors, semanticColors } from './colors';
+import { colors } from './colors';
 import { typography } from './typography';
 import { spacing } from './spacing';
 import { borderRadius } from './border-radius';

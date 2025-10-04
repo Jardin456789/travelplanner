@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { parseISO, isBefore, isEqual } from 'date-fns';
 import type { DayItinerary } from '@/types/travel';
 
 interface UseMobileNavigationProps {

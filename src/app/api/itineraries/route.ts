@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { itineraries, insertItinerarySchema } from '@/lib/db/schema';
-import { eq } from 'drizzle-orm';
 
 // GET /api/itineraries - Liste tous les itinéraires
 export async function GET() {

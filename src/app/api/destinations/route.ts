@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { destinations, insertDestinationSchema } from '@/lib/db/schema';
-import { eq, like } from 'drizzle-orm';
+import { like } from 'drizzle-orm';
 
 // GET /api/destinations - Liste toutes les destinations ou recherche par nom
 export async function GET(request: NextRequest) {

@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
-import { parseISO } from 'date-fns';
 import Map, { Popup, NavigationControl, ScaleControl, MapRef, Marker } from 'react-map-gl';
 import type { MapMouseEvent } from 'mapbox-gl';
 import Image from 'next/image';

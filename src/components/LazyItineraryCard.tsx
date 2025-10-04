@@ -38,8 +38,7 @@ export default function LazyItineraryCard({
   isSelected = false,
   isPast = false,
   onSelect,
-  onDelete,
-  index = 0
+  onDelete
 }: LazyItineraryCardProps) {
   const { elementRef, isVisible } = useLazyImage();
 

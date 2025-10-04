@@ -5,7 +5,7 @@ import { useTheme } from '@/design-system/hooks/use-theme';
 
 type ToasterProps = React.ComponentProps<typeof Sonner>;
 
-const Toaster = ({ ...props }: ToasterProps) => {
+export const Toaster = ({ ...props }: ToasterProps) => {
   const { theme } = useTheme();
 
   return (
@@ -28,4 +28,4 @@ const Toaster = ({ ...props }: ToasterProps) => {
   );
 };
 
-export { Toaster, toast } from 'sonner';
+export { toast } from 'sonner';

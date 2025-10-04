@@ -26,6 +26,8 @@ export function useIntersectionObserver(
     setEntry(entry);
   };
 
+  const thresholdString = JSON.stringify(threshold);
+
   useEffect(() => {
     const node = elementRef?.current;
     const hasIOSupport = !!window.IntersectionObserver;
@@ -40,7 +42,7 @@ export function useIntersectionObserver(
     observer.observe(node);
 
     return () => observer.disconnect();
-  }, [elementRef, JSON.stringify(threshold), root, rootMargin, frozen]);
+  }, [elementRef, thresholdString, root, rootMargin, frozen, threshold]);
 
   return { elementRef, entry };
 }
