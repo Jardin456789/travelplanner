@@ -1,7 +1,6 @@
-import { DayItinerary } from '@/types/travel';
 import { destinations } from './destinations';
 
-export const europeDayItineraries: DayItinerary[] = [
+export const europeDayItineraries = [
   {
     date: '2025-09-18',
     destination: destinations[0], // Koman

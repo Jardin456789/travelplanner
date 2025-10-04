@@ -1,7 +1,6 @@
-import { DayItinerary } from '@/types/travel';
 import { destinations } from './destinations';
 
-export const turkeyDayItineraries: DayItinerary[] = [
+export const turkeyDayItineraries = [
   {
     date: '2025-09-23',
     destination: destinations[2], // Skopje - Jour de départ

@@ -1,4 +1,3 @@
-import { DayItinerary } from '@/types/travel';
 import { destinations } from './destinations';
 
 const getDestination = (id: string) => {
@@ -9,7 +8,7 @@ const getDestination = (id: string) => {
   return destination;
 };
 
-export const kazakhstanDayItineraries: DayItinerary[] = [
+export const kazakhstanDayItineraries = [
   // === KAZAKHSTAN - SEGMENTS VÉLO DÉTAILLÉS ===
   {
     date: '2025-10-10',

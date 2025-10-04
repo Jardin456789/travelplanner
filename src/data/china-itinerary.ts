@@ -1,4 +1,3 @@
-import { DayItinerary } from '@/types/travel';
 import { destinations } from './destinations';
 
 const getDestination = (id: string) => {
@@ -9,7 +8,7 @@ const getDestination = (id: string) => {
   return destination;
 };
 
-export const chinaDayItineraries: DayItinerary[] = [
+export const chinaDayItineraries = [
   // === CHINE - 3 semaines du Xinjiang au Vietnam ===
   {
     date: '2025-10-29',

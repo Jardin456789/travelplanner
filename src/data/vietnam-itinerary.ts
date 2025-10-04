@@ -1,7 +1,6 @@
-import { DayItinerary } from '@/types/travel';
 import { destinations } from './destinations';
 
-export const vietnamDayItineraries: DayItinerary[] = [
+export const vietnamDayItineraries = [
   // === VIETNAM ===
   {
     date: '2025-11-15',
