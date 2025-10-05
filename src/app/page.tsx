@@ -28,7 +28,7 @@ export default function Home() {
   const { loading, destinations, dayItineraries, itinerary } = useTravelData();
 
   // États de base
-  const [mapStyle, setMapStyle] = useState<string>(MAPBOX_STYLES.satelliteStreets);
+  const [mapStyle, setMapStyle] = useState<string>(MAPBOX_STYLES.streets);
 
   // Utiliser la date actuelle côté client
   const clientCurrentDate = useCurrentDate();
@@ -105,12 +105,16 @@ export default function Home() {
           onMonthOpen={itineraryState.openMonth}
         />
 
-        {/* Boutons flottants */}
-        <div className="absolute top-4 right-4 z-10 flex flex-col items-end gap-2">
+        {/* Sélecteur de style en haut à gauche */}
+        <div className="absolute top-4 left-4 z-10">
           <MapStyleSelector
             currentStyle={mapStyle}
             onStyleChange={(style) => setMapStyle(style)}
           />
+        </div>
+
+        {/* Bouton flottant d'ajout en haut à droite */}
+        <div className="absolute top-4 right-4 z-10">
           <Button
             size="icon"
             variant="default"

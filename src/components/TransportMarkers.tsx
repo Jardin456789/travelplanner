@@ -17,7 +17,7 @@ export const TransportMarkers: React.FC<TransportMarkersProps> = ({ segments }) 
 
         return (
           <Marker
-            key={segment.id}
+            key={`${segment.id}-${segment.type}`}
             longitude={segment.position[0]}
             latitude={segment.position[1]}
             onClick={(e) => {

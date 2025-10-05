@@ -72,7 +72,7 @@ export default function TravelMap({
   center: providedCenter,
   zoom: providedZoom,
   className = "h-96 w-full rounded-lg",
-  mapStyle = MAPBOX_STYLES.satelliteStreets,
+  mapStyle = MAPBOX_STYLES.streets,
   selectedStep,
   onStepSelect,
   onMonthOpen

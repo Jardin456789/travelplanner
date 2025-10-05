@@ -20,8 +20,9 @@ export const useTransportSegments = (
   return useMemo(() => {
     // Toujours retourner les segments, l'affichage sera géré par le composant TransportMarkers
 
-    return dayItineraries
-      .sort((a, b) => a.order - b.order)
+    const orderedSteps = [...dayItineraries].sort((a, b) => a.order - b.order);
+
+    return orderedSteps
       .filter(day => day.transportToNext)
       .map((day) => {
         const nextDay = dayItineraries.find(d => d.order === day.order + 1);
