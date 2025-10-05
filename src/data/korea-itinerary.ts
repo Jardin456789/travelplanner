@@ -1,6 +1,4 @@
-import { DayItinerary } from '@/types/travel';
+import type { DayItinerary } from '@/types/travel';
 
-export const koreaDayItineraries: DayItinerary[] = [
-  // === CORÉE DU SUD ===
-  // Étapes coréennes à ajouter plus tard
-];
+// Les étapes Corée sont désormais gérées dans Neon.
+export const koreaDayItineraries: DayItinerary[] = [];

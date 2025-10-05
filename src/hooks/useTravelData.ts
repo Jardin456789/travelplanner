@@ -45,14 +45,18 @@ export function useTravelData(): UseTravelDataResult {
     const destinations = destinationsQuery.data.map(mapDestination);
     const destinationMap = new Map(destinations.map((destination) => [destination.id, destination]));
 
-    const dayItineraries: DayItinerary[] = stepsQuery.data
-      .map((step) => {
-        const destination = destinationMap.get(step.destinationId);
-        if (!destination) {
-          return null;
+    const dayItineraries = stepsQuery.data
+      .reduce<DayItinerary[]>((acc, step) => {
+        if (typeof step.destinationId !== 'number') {
+          return acc;
         }
 
-        return {
+        const destination = destinationMap.get(step.destinationId);
+        if (!destination) {
+          return acc;
+        }
+
+        acc.push({
           id: step.id,
           itineraryId: step.itineraryId,
           date: step.date,
@@ -65,9 +69,10 @@ export function useTravelData(): UseTravelDataResult {
           bikeSegment: step.bikeSegment,
           createdAt: step.createdAt,
           updatedAt: step.updatedAt,
-        } satisfies DayItinerary;
-      })
-      .filter((value): value is DayItinerary => value !== null)
+        });
+
+        return acc;
+      }, [])
       .sort((a, b) => a.order - b.order);
 
     const itinerary: Itinerary = {

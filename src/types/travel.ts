@@ -11,8 +11,8 @@ export interface Destination {
   address?: string;
   imageUrl?: string;
   category?: string; // hotel, restaurant, attraction, etc.
-  createdAt: string;
-  updatedAt: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface Activity {
@@ -48,22 +48,22 @@ export interface BikeSegmentDetails {
   difficulte: string;
   points_interet: string[];
   reseau_eau: string;
-  coordonnees: Record<string, [number, number]>;
+  coordonnees: Record<string, number[] | undefined>;
 }
 
 export interface DayItinerary {
   id?: number;
-  itineraryId: number;
+  itineraryId?: number;
   date: string; // ISO date string
-  destinationId: number;
+  destinationId?: number;
   destination: Destination; // Destination principale du jour
   activities: Activity[];
   notes?: string;
   order: number; // Ordre dans l'itinéraire
   transportToNext?: TransportSegment; // Transport vers l'étape suivante
   bikeSegment?: BikeSegmentDetails; // Détails spécifiques aux étapes vélo
-  createdAt: string;
-  updatedAt: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface Itinerary {

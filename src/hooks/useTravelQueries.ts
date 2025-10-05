@@ -177,7 +177,7 @@ export function useUpdateStep() {
         difficulte: string;
         points_interet: string[];
         reseau_eau: string;
-        coordonnees?: Record<string, number[]>;
+        coordonnees?: Record<string, number[] | undefined>;
       };
       transportToNext?: {
         type: string;

@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import Map, { Popup, NavigationControl, ScaleControl, MapRef, Marker } from 'react-map-gl';
-import type { MapMouseEvent } from 'mapbox-gl';
+import type { MapMouseEvent, Style } from 'mapbox-gl';
 import Image from 'next/image';
 import { Destination, DayItinerary } from '@/types/travel';
 import { calculateOptimalView } from '@/lib/map-utils';
@@ -44,7 +44,7 @@ export const FREE_STYLES = {
     version: 8,
     sources: {
       'osm-tiles': {
-        type: 'raster',
+        type: 'raster' as const,
         tiles: [
           'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png',
           'https://b.tile.openstreetmap.org/{z}/{x}/{y}.png',
@@ -56,7 +56,7 @@ export const FREE_STYLES = {
     },
     layers: [{
       id: 'osm-tiles',
-      type: 'raster',
+      type: 'raster' as const,
       source: 'osm-tiles',
       minzoom: 0,
       maxzoom: 19
@@ -190,16 +190,8 @@ export default function TravelMap({
 
   // Utiliser uniquement la variable d'environnement
   const mapboxAccessToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
-
-  // Token de fallback temporaire pour le développement
-  const FALLBACK_TOKEN = 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNsN3R5NzB6YjBhenozZG8xbzVvcW1xaWsifQ.8Kv3X8zv9yN0QX9YxF5ZGQ';
-
-  // Utiliser le token de l'environnement ou le fallback
-  const finalToken = mapboxAccessToken || FALLBACK_TOKEN;
-
-  // Déterminer si on utilise Mapbox ou OpenStreetMap
-  const useMapbox = finalToken && finalToken !== FALLBACK_TOKEN;
-  const finalMapStyle = useMapbox ? mapStyle : FREE_STYLES.osm;
+  const hasMapboxToken = Boolean(mapboxAccessToken);
+  const finalMapStyle: string | Style = hasMapboxToken ? mapStyle : FREE_STYLES.osm;
 
   // Gestionnaire de clic pour les clusters et points
   const handleMapClick = useCallback((event: MapMouseEvent) => {
@@ -277,14 +269,14 @@ export default function TravelMap({
     <div className={className}>
       <Map
         ref={mapRef}
-        mapboxAccessToken={finalToken}
+        mapboxAccessToken={mapboxAccessToken}
         initialViewState={{
           longitude: center[1],
           latitude: center[0],
           zoom: zoom,
         }}
         style={{ width: '100%', height: '100%' }}
-        mapStyle={typeof finalMapStyle === 'string' ? finalMapStyle : MAPBOX_STYLES.streets}
+        mapStyle={finalMapStyle}
         onClick={handleMapClick}
         onZoomEnd={(e) => setCurrentZoomLevel(e.target.getZoom())}
         interactiveLayerIds={['clusters', 'unclustered-point']}

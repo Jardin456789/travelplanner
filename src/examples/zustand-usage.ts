@@ -1,6 +1,9 @@
 // Exemples d'utilisation du store Zustand dans l'app
 
 import { useItineraryStore } from '@/stores/itineraryStore';
+import type { DayItinerary } from '@/types/travel';
+import { useReorderSteps } from '@/hooks/useTravelQueries';
+import { toast } from '@/components/ui/toaster';
 
 // === UTILISATION DANS LES COMPOSANTS ===
 
@@ -11,7 +14,7 @@ export function useCurrentItineraryState() {
   const selectItinerary = () => {
     // Ici on pourrait fetch l'itinéraire depuis TanStack Query
     // puis mettre à jour le store
-    setCurrentItinerary(fetchedItinerary);
+    setCurrentItinerary(null);
   };
 
   return { currentItinerary, selectItinerary };
@@ -89,6 +92,7 @@ export function useMonthExpansion() {
 
 export function useReorderItinerary() {
   const { reorderSteps, currentItinerary } = useItineraryStore();
+  const reorderStepsMutation = useReorderSteps();
 
   const handleReorder = async (draggedSteps: DayItinerary[]) => {
     try {

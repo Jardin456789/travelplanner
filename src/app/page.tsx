@@ -60,7 +60,7 @@ export default function Home() {
   }, [clientCurrentDate, sortedDayItineraries]);
 
   // Hooks personnalisés
-  const { groupedByMonth } = useMonthGrouping({ dayItineraries: sortedDayItineraries, clientCurrentDate });
+  const { groupedByMonth } = useMonthGrouping({ dayItineraries: sortedDayItineraries });
   const itineraryState = useItineraryState(currentStep || null, sortedDayItineraries);
   const mobileNav = useMobileNavigation({
     allSteps: sortedDayItineraries,

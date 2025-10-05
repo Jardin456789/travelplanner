@@ -1,6 +1,5 @@
 import { useMemo } from 'react';
-import { parseISO, isBefore } from 'date-fns';
-import type { DayItinerary } from '@/types/travel';
+import type { DayItinerary, Destination } from '@/types/travel';
 
 // Type pour représenter une étape ou un groupe d'étapes consécutives
 export type StepGroup = {
@@ -11,15 +10,14 @@ export type StepGroup = {
   days: DayItinerary[];
   startDate: Date;
   endDate: Date;
-  destination: { id: string; name: string };
+  destination: Pick<Destination, 'id' | 'name'>;
 };
 
 interface UseMonthGroupingProps {
   dayItineraries: DayItinerary[];
-  clientCurrentDate: Date;
 }
 
-export function useMonthGrouping({ dayItineraries, clientCurrentDate }: UseMonthGroupingProps) {
+export function useMonthGrouping({ dayItineraries }: UseMonthGroupingProps) {
   // Fonction pour grouper les étapes consécutives dans la même destination
   const groupConsecutiveSteps = useMemo(() =>
     (days: DayItinerary[]): StepGroup[] => {

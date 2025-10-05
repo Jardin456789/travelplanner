@@ -43,7 +43,7 @@ interface ItineraryState {
 export const useItineraryStore = create<ItineraryState>()(
   devtools(
     persist(
-      (set, get) => ({
+      (set) => ({
         // État initial
         currentItinerary: null,
         selectedStep: null,
@@ -96,17 +96,22 @@ export const useItineraryStore = create<ItineraryState>()(
           set((state) => {
             if (!state.currentItinerary) return state;
 
-            const updatedDays = state.currentItinerary.days.map(day =>
-              day.id === stepId
-                ? {
-                    ...day,
-                    transportToNext: {
-                      ...day.transportToNext,
-                      type: transportType
-                    }
-                  }
-                : day
-            );
+            const updatedDays = state.currentItinerary.days.map((day) => {
+              const matchesId = day.id === stepId;
+              const matchesOrderFallback = !day.id && day.order === stepId;
+
+              if (!matchesId && !matchesOrderFallback) {
+                return day;
+              }
+
+              return {
+                ...day,
+                transportToNext: {
+                  ...day.transportToNext,
+                  type: transportType
+                }
+              };
+            });
 
             return {
               currentItinerary: {
@@ -148,6 +153,30 @@ export const useItineraryStore = create<ItineraryState>()(
           selectedTags: state.selectedTags,
           dateRange: state.dateRange,
         }),
+        merge: (persistedState, currentState) => {
+          const {
+            expandedMonths,
+            dateRange,
+            ...rest
+          } = persistedState as Partial<ItineraryState> & {
+            expandedMonths?: string[];
+            dateRange?: { start?: string | Date; end?: string | Date };
+          };
+
+          return {
+            ...currentState,
+            ...rest,
+            expandedMonths: expandedMonths
+              ? new Set(expandedMonths)
+              : currentState.expandedMonths,
+            dateRange: dateRange
+              ? {
+                  start: dateRange.start ? new Date(dateRange.start) : undefined,
+                  end: dateRange.end ? new Date(dateRange.end) : undefined,
+                }
+              : currentState.dateRange,
+          };
+        },
       }
     ),
     {

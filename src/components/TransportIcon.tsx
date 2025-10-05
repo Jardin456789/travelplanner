@@ -30,12 +30,18 @@ export default function TransportIcon({ fromStep, itineraryId }: TransportIconPr
   const handleTransportSelect = async (transportType: TransportType) => {
     if (!fromStep.id) return;
 
+    const destinationId = fromStep.destinationId ?? fromStep.destination?.id;
+    if (!destinationId) {
+      console.warn('Impossible de mettre à jour le transport : destination sans identifiant.');
+      return;
+    }
+
     try {
       await updateTransportMutation.mutateAsync({
         id: fromStep.id,
         itineraryId: itineraryId,
         date: fromStep.date,
-        destinationId: fromStep.destinationId,
+        destinationId,
         notes: fromStep.notes,
         order: fromStep.order,
         activities: fromStep.activities,

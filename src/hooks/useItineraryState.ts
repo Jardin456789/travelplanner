@@ -77,7 +77,7 @@ export function useItineraryState(
     setReorderError(null);
 
     try {
-      await reorderStepsMutation({ steps: payload });
+      await reorderStepsMutation.mutateAsync({ steps: payload });
     } catch (error) {
       console.error('Failed to reorder steps', error);
       const message = error instanceof Error
