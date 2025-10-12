@@ -3,9 +3,10 @@
 import { useCallback, useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { DayItinerary, Destination } from '@/types/travel';
-import { Button } from './ui/button';
-import { useUpdateStep, useCreateDestination } from '@/hooks/useTravelQueries';
+import { useUpdateStep, useCreateDestination, useDeleteStep } from '@/hooks/useTravelQueries';
+import { Button } from '@/components/ui/button';
 import { DEBOUNCE_TIMES } from '@/lib/query-config';
+import { Trash2, Loader2 } from 'lucide-react';
 
 type PlaceSuggestion = {
   placeId: string;
@@ -30,23 +31,25 @@ type PlaceDetails = {
   mapboxProperties?: Record<string, unknown>;
 };
 
-type AddStepDialogProps = {
+type EditStepDialogProps = {
   isOpen: boolean;
-  onRequestClose: () => void;
+  step: DayItinerary | null;
   itineraryId: number;
   existingDestinations: Destination[];
-  existingSteps: DayItinerary[];
-  onStepCreated?: (stepId: number) => void;
+  onRequestClose: () => void;
+  onStepUpdated?: (stepId: number) => void;
+  onStepDeleted?: (step: DayItinerary) => void;
 };
 
-export function AddStepDialog({
+export function EditStepDialog({
   isOpen,
-  onRequestClose,
+  step,
   itineraryId,
   existingDestinations,
-  existingSteps,
-  onStepCreated,
-}: AddStepDialogProps) {
+  onRequestClose,
+  onStepUpdated,
+  onStepDeleted,
+}: EditStepDialogProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [suggestions, setSuggestions] = useState<PlaceSuggestion[]>([]);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
@@ -58,38 +61,52 @@ export function AddStepDialog({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isMapSelectionOpen, setIsMapSelectionOpen] = useState(false);
   const [mapSelectedCoordinates, setMapSelectedCoordinates] = useState<{ lat: number; lng: number } | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const languageCode: 'fr' | 'en' = 'fr';
 
-  // Utiliser les hooks de mutation React Query
   const updateStepMutation = useUpdateStep();
   const createDestinationMutation = useCreateDestination();
+  const deleteStepMutation = useDeleteStep();
 
   useEffect(() => {
-    if (isOpen) {
-      const lastStep = existingSteps.at(-1);
-      if (lastStep) {
-        const lastDate = new Date(lastStep.date);
-        lastDate.setDate(lastDate.getDate() + 1);
-        const nextDate = lastDate.toISOString().split('T')[0];
-        setFormDate(nextDate);
+    if (isOpen && step) {
+      setSearchQuery(step.destination?.name ?? '');
+      setNotes(step.notes ?? '');
+      setFormDate(step.date.slice(0, 10));
+      if (step.destination?.coordinates) {
+        setSelectedPlace({
+          id: step.destination.id ? step.destination.id.toString() : `dest-${step.order}`,
+          name: step.destination.name ?? '',
+          formattedAddress: step.destination.address ?? '',
+          coordinates: step.destination.coordinates,
+          types: step.destination.category ? [step.destination.category] : [],
+        });
+        setMapSelectedCoordinates(step.destination.coordinates);
       } else {
-        const today = new Date().toISOString().split('T')[0];
-        setFormDate(today);
+        setSelectedPlace(null);
+        setMapSelectedCoordinates(null);
       }
       setSubmissionError(null);
-    } else {
-      setSearchQuery('');
+      setIsMapSelectionOpen(false);
+    }
+    if (!isOpen) {
       setSuggestions([]);
+      setSearchQuery('');
       setSelectedPlace(null);
       setNotes('');
       setIsSubmitting(false);
       setSubmissionError(null);
       setIsMapSelectionOpen(false);
       setMapSelectedCoordinates(null);
+      setIsLoadingPlaceDetails(false);
     }
-  }, [isOpen, existingSteps]);
+  }, [isOpen, step]);
 
   useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
     if (!searchQuery.trim()) {
       setSuggestions([]);
       return;
@@ -121,21 +138,20 @@ export function AddStepDialog({
       } finally {
         setIsLoadingSuggestions(false);
       }
-  }, DEBOUNCE_TIMES.AUTOCOMPLETE);
+    }, DEBOUNCE_TIMES.AUTOCOMPLETE);
 
     return () => window.clearTimeout(timeout);
-  }, [searchQuery, languageCode]);
+  }, [searchQuery, languageCode, isOpen]);
 
-  const resetForm = useCallback(() => {
-    setSearchQuery('');
-    setSuggestions([]);
-    setSelectedPlace(null);
-    setNotes('');
-    setIsSubmitting(false);
-    setSubmissionError(null);
-    setIsMapSelectionOpen(false);
-    setMapSelectedCoordinates(null);
-  }, []);
+  useEffect(() => {
+    if (selectedPlace) {
+      setMapSelectedCoordinates(selectedPlace.coordinates);
+    }
+  }, [selectedPlace]);
+
+  const closeDialog = useCallback(() => {
+    onRequestClose();
+  }, [onRequestClose]);
 
   const handleSuggestionSelect = useCallback(async (suggestion: PlaceSuggestion) => {
     try {
@@ -210,97 +226,162 @@ export function AddStepDialog({
       });
       setSearchQuery('Point sélectionné');
       setSubmissionError(
-        'Informations précises indisponibles pour ce point. Vous pouvez nommer et décrire l’étape manuellement.'
+        'Informations précises indisponibles pour ce point. Vous pouvez ajuster le nom et les notes manuellement.'
       );
     } finally {
       setIsLoadingPlaceDetails(false);
     }
   }, [languageCode]);
 
-  useEffect(() => {
-    if (selectedPlace) {
-      setMapSelectedCoordinates(selectedPlace.coordinates);
-    }
-  }, [selectedPlace]);
-
   const handleSubmit = useCallback(async () => {
-    if (!selectedPlace) {
-      setSubmissionError('Sélectionnez une destination pour ajouter une étape.');
+    if (!step) {
       return;
     }
 
     if (!formDate) {
-      setSubmissionError('Choisissez une date pour cette nouvelle étape.');
+      setSubmissionError('Choisissez une date pour cette étape.');
       return;
     }
 
-    const maxOrder = existingSteps.reduce((max, step) => Math.max(max, step.order), 0);
-    const targetOrder = maxOrder + 1;
+    const referenceName = (selectedPlace?.name ?? searchQuery ?? '').trim() || step.destination?.name ?? '';
+    const referenceCoordinates = selectedPlace?.coordinates ?? step.destination?.coordinates ?? null;
+    const referenceAddress = selectedPlace?.formattedAddress ?? step.destination?.address ?? '';
+    const referenceTypes = selectedPlace?.types ?? (step.destination?.category ? [step.destination.category] : []);
+    const referenceId = selectedPlace?.id ?? (step.destination?.id ? step.destination.id.toString() : undefined);
+
+    if (!referenceName) {
+      setSubmissionError('Indiquez un nom pour cette destination.');
+      return;
+    }
+
+    if (!referenceCoordinates) {
+      setSubmissionError('Sélectionnez une destination pour cette étape.');
+      return;
+    }
 
     setIsSubmitting(true);
     setSubmissionError(null);
 
     try {
-      const existingDestination = existingDestinations.find((destination) => {
-        if (destination.name.toLowerCase() === selectedPlace.name.toLowerCase()) {
+      let destinationId: number | undefined = step.destination?.id;
+
+      const matchedDestination = existingDestinations.find((destination) => {
+        if (destination.id && referenceId && destination.id.toString() === referenceId) {
           return true;
         }
-        const latDiff = Math.abs(destination.coordinates.lat - selectedPlace.coordinates.lat);
-        const lngDiff = Math.abs(destination.coordinates.lng - selectedPlace.coordinates.lng);
-        return latDiff < 0.0005 && lngDiff < 0.0005;
+
+        if (destination.name.toLowerCase() === referenceName.toLowerCase()) {
+          return true;
+        }
+
+        if (destination.coordinates) {
+          const latDiff = Math.abs(destination.coordinates.lat - referenceCoordinates.lat);
+          const lngDiff = Math.abs(destination.coordinates.lng - referenceCoordinates.lng);
+          return latDiff < 0.0005 && lngDiff < 0.0005;
+        }
+
+        return false;
       });
 
-      const destinationId = existingDestination
-        ? existingDestination.id
-        : (await createDestinationMutation.mutateAsync({
-            name: selectedPlace.name || searchQuery,
-            description: undefined,
-            coordinates: selectedPlace.coordinates,
-            address: selectedPlace.formattedAddress || undefined,
-            category: selectedPlace.types?.[0] ?? undefined,
-          })).id;
+      if (matchedDestination) {
+        destinationId = matchedDestination.id;
+      } else if (!destinationId) {
+        const newDestination = await createDestinationMutation.mutateAsync({
+          name: referenceName || searchQuery,
+          description: undefined,
+          coordinates: referenceCoordinates,
+          address: referenceAddress || undefined,
+          category: referenceTypes?.[0] ?? undefined,
+        });
+        destinationId = newDestination.id;
+      } else if (step.destination?.id && referenceName !== step.destination.name) {
+        const newDestination = await createDestinationMutation.mutateAsync({
+          name: referenceName || searchQuery,
+          description: undefined,
+          coordinates: referenceCoordinates,
+          address: referenceAddress || undefined,
+          category: referenceTypes?.[0] ?? undefined,
+        });
+        destinationId = newDestination.id;
+      }
 
-      // Utiliser la mutation React Query pour créer l'étape
+      if (!destinationId) {
+        throw new Error('Impossible de déterminer la destination à associer.');
+      }
+
       const result = await updateStepMutation.mutateAsync({
+        id: step.id,
         itineraryId,
         date: formDate,
         destinationId,
         notes: notes.trim() ? notes.trim() : undefined,
-        order: targetOrder,
-        activities: [],
+        order: step.order,
+        activities: step.activities.map((activity) => ({
+          id: activity.id,
+          title: activity.title,
+          description: activity.description,
+          destinationId: activity.destinationId,
+          startTime: activity.startTime,
+          endTime: activity.endTime,
+          category: activity.category,
+        })),
+        bikeSegment: step.bikeSegment,
+        transportToNext: step.transportToNext,
       });
 
       if (typeof result.id === 'number') {
-        onStepCreated?.(result.id);
+        onStepUpdated?.(result.id);
       }
-      resetForm();
-      onRequestClose();
+      closeDialog();
     } catch (error) {
       console.error(error);
       setSubmissionError(
         error instanceof Error
           ? error.message
-          : 'Une erreur est survenue lors de la création de la nouvelle étape.'
+          : 'Une erreur est survenue lors de la mise à jour de cette étape.'
       );
     } finally {
       setIsSubmitting(false);
     }
   }, [
-    selectedPlace,
-    formDate,
-    existingSteps,
-    existingDestinations,
-    notes,
-    itineraryId,
-    onStepCreated,
-    resetForm,
-    onRequestClose,
-    searchQuery,
+    closeDialog,
     createDestinationMutation,
+    existingDestinations,
+    formDate,
+    itineraryId,
+    notes,
+    searchQuery,
+    selectedPlace,
+    step,
     updateStepMutation,
+    onStepUpdated,
   ]);
 
-  if (!isOpen) {
+  const handleDeleteStep = useCallback(async () => {
+    if (!step?.id) {
+      return;
+    }
+
+    const userConfirmed = window.confirm('Voulez-vous vraiment supprimer cette étape ? Cette action est définitive.');
+    if (!userConfirmed) {
+      return;
+    }
+
+    try {
+      setIsDeleting(true);
+      setSubmissionError(null);
+      await deleteStepMutation.mutateAsync(step.id);
+      onStepDeleted?.(step);
+      closeDialog();
+    } catch (error) {
+      console.error('Erreur lors de la suppression:', error);
+      setSubmissionError('Impossible de supprimer cette étape pour le moment. Réessayez plus tard.');
+    } finally {
+      setIsDeleting(false);
+    }
+  }, [closeDialog, deleteStepMutation, onStepDeleted, step]);
+
+  if (!isOpen || !step) {
     return null;
   }
 
@@ -309,19 +390,35 @@ export function AddStepDialog({
       <div className="w-full max-w-lg rounded-lg bg-white shadow-xl">
         <div className="flex items-center justify-between border-b border-gray-200 px-5 py-4">
           <div>
-            <h2 className="text-base font-semibold text-gray-900">Ajouter une étape</h2>
-            <p className="text-xs text-gray-500">Recherchez une destination via Mapbox et ajoutez-la à l&apos;itinéraire.</p>
+            <h2 className="text-base font-semibold text-gray-900">Modifier l&apos;étape</h2>
+            <p className="text-xs text-gray-500">Actualisez la destination, la date ou vos notes en conservant les activités existantes.</p>
           </div>
-          <button
-            type="button"
-            onClick={() => {
-              resetForm();
-              onRequestClose();
-            }}
-            className="text-sm text-gray-400 hover:text-gray-600"
-          >
-            ✕
-          </button>
+          <div className="flex items-center gap-1.5">
+            {step.id && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-red-500 hover:text-red-600 hover:bg-red-50 focus-visible:ring-red-500/60"
+                onClick={handleDeleteStep}
+                disabled={isSubmitting || isDeleting}
+              >
+                {isDeleting ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Trash2 className="h-4 w-4" />
+                )}
+                <span className="sr-only">Supprimer l&apos;étape</span>
+              </Button>
+            )}
+            <button
+              type="button"
+              onClick={closeDialog}
+              className="text-sm text-gray-400 hover:text-gray-600"
+              disabled={isSubmitting || isDeleting}
+            >
+              ✕
+            </button>
+          </div>
         </div>
 
         <div className="px-5 py-4 space-y-4">
@@ -333,18 +430,42 @@ export function AddStepDialog({
                 className="text-xs font-medium text-blue-600 hover:text-blue-700"
                 onClick={() => setIsMapSelectionOpen((current) => !current)}
               >
-                {isMapSelectionOpen ? 'Fermer la carte' : 'Sélectionner un point sur la carte'}
+                {isMapSelectionOpen ? 'Fermer la carte' : 'Sélectionner sur la carte'}
               </button>
             </div>
             <input
               type="text"
               value={searchQuery}
               onChange={(event) => {
-                setSearchQuery(event.target.value);
-                setSelectedPlace(null);
-                setMapSelectedCoordinates(null);
+                const { value } = event.target;
+                setSearchQuery(value);
+                setSubmissionError(null);
+                if (!value.trim()) {
+                  setSelectedPlace(null);
+                  setMapSelectedCoordinates(null);
+                } else {
+                  setSelectedPlace((previous) =>
+                    previous
+                      ? {
+                          ...previous,
+                          name: value,
+                        }
+                      : step.destination?.coordinates
+                      ? {
+                          id: step.destination.id ? step.destination.id.toString() : `dest-${step.order}`,
+                          name: value,
+                          formattedAddress: step.destination.address ?? '',
+                          coordinates: step.destination.coordinates,
+                          types: step.destination.category ? [step.destination.category] : [],
+                        }
+                      : null
+                  );
+                  if (!mapSelectedCoordinates && step.destination?.coordinates) {
+                    setMapSelectedCoordinates(step.destination.coordinates);
+                  }
+                }
               }}
-              placeholder="Par exemple : Almaty, Kazakhstan"
+              placeholder="Modifier le lieu de l'étape"
               className="w-full rounded border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none"
             />
             {isLoadingSuggestions && (
@@ -370,7 +491,7 @@ export function AddStepDialog({
             {isMapSelectionOpen && (
               <div className="mt-4 space-y-3 text-xs text-gray-600">
                 <div className="rounded-md border border-blue-100 bg-blue-50 px-3 py-2 text-blue-800">
-                  Cliquez sur la carte pour positionner votre nouvelle étape. Vous pourrez ajuster son nom ensuite si nécessaire.
+                  Cliquez sur la carte pour repositionner cette étape. Vous pourrez ajuster son nom ensuite si nécessaire.
                 </div>
                 <MapPointSelector
                   selectedCoordinates={mapSelectedCoordinates}
@@ -399,10 +520,10 @@ export function AddStepDialog({
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Informations complémentaires</label>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Adresse</label>
               <input
                 type="text"
-                value={selectedPlace?.formattedAddress ?? ''}
+                value={selectedPlace?.formattedAddress ?? step.destination?.address ?? ''}
                 readOnly
                 placeholder="Adresse complète"
                 className="w-full rounded border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-500"
@@ -411,23 +532,15 @@ export function AddStepDialog({
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Notes (optionnel)</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Notes</label>
             <textarea
               value={notes}
               onChange={(event) => setNotes(event.target.value)}
               rows={3}
-              placeholder="Infos logistiques, idées d&apos;activités, etc."
+              placeholder="Mettez à jour les informations pratiques"
               className="w-full rounded border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none"
             />
           </div>
-
-          {selectedPlace && !isMapSelectionOpen && (
-            <div className="rounded border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-800">
-              <div className="font-semibold">Coordonnées GPS</div>
-              <p>Latitude : {selectedPlace.coordinates.lat.toFixed(6)}</p>
-              <p>Longitude : {selectedPlace.coordinates.lng.toFixed(6)}</p>
-            </div>
-          )}
 
           {submissionError && (
             <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-600">
@@ -436,29 +549,28 @@ export function AddStepDialog({
           )}
         </div>
 
-        <div className="flex items-center justify-between border-t border-gray-200 px-5 py-4">
-          <div className="text-xs text-gray-400">
-            Les lieux sont fournis par l&apos;API Mapbox Geocoding. Vérifiez toujours les coordonnées avant de valider.
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              className="h-8 px-3 text-sm"
-              onClick={() => {
-                resetForm();
-                onRequestClose();
-              }}
-              disabled={isSubmitting}
-            >
-              Annuler
-            </Button>
-            <Button
-              className="h-8 px-4 text-sm"
-              onClick={handleSubmit}
-              disabled={isSubmitting || isLoadingPlaceDetails}
-            >
-              {isSubmitting ? 'Ajout…' : 'Ajouter l\'étape'}
-            </Button>
+        <div className="border-t border-gray-200 px-5 py-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-xs text-gray-400">
+              Les modifications sont synchronisées avec votre itinéraire. Vérifiez les informations avant de valider.
+            </p>
+            <div className="flex items-center justify-end gap-2">
+              <Button
+                variant="outline"
+                className="h-8 px-3 text-sm"
+                onClick={closeDialog}
+                disabled={isSubmitting || isDeleting}
+              >
+                Annuler
+              </Button>
+              <Button
+                className="h-8 px-4 text-sm"
+                onClick={handleSubmit}
+                disabled={isSubmitting || isLoadingPlaceDetails || isDeleting}
+              >
+                {isSubmitting ? 'Enregistrement…' : 'Enregistrer'}
+              </Button>
+            </div>
           </div>
         </div>
       </div>

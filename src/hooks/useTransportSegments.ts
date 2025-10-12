@@ -28,8 +28,15 @@ export const useTransportSegments = (
         const nextDay = dayItineraries.find(d => d.order === day.order + 1);
         if (!nextDay || !day.transportToNext) return null;
 
-        const startCoord: [number, number] = [day.destination.coordinates.lng, day.destination.coordinates.lat];
-        const endCoord: [number, number] = [nextDay.destination.coordinates.lng, nextDay.destination.coordinates.lat];
+        const startCoordinates = day.destination?.coordinates;
+        const endCoordinates = nextDay.destination?.coordinates;
+
+        if (!startCoordinates || !endCoordinates) {
+          return null;
+        }
+
+        const startCoord: [number, number] = [startCoordinates.lng, startCoordinates.lat];
+        const endCoord: [number, number] = [endCoordinates.lng, endCoordinates.lat];
 
         // Vérifier si c'est la même destination (séjour prolongé dans une ville)
         const sameDestination = day.destination.id === nextDay.destination.id;

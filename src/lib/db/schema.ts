@@ -85,6 +85,22 @@ export const steps = pgTable(
   })
 );
 
+export const stepComments = pgTable(
+  'step_comments',
+  {
+    id: serial('id').primaryKey(),
+    stepId: integer('step_id')
+      .references(() => steps.id, { onDelete: 'cascade' })
+      .notNull(),
+    author: text('author'),
+    content: text('content').notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    stepIdx: index('step_comments_step_idx').on(table.stepId),
+  })
+);
+
 // Zod schemas for validation
 export const insertItinerarySchema = createInsertSchema(itineraries);
 export const selectItinerarySchema = createSelectSchema(itineraries);
@@ -94,6 +110,8 @@ export const selectDestinationSchema = createSelectSchema(destinations);
 
 export const insertStepSchema = createInsertSchema(steps);
 export const selectStepSchema = createSelectSchema(steps);
+export const insertStepCommentSchema = createInsertSchema(stepComments);
+export const selectStepCommentSchema = createSelectSchema(stepComments);
 
 // Types
 export type Itinerary = typeof itineraries.$inferSelect;
@@ -104,3 +122,5 @@ export type NewDestination = typeof destinations.$inferInsert;
 
 export type Step = typeof steps.$inferSelect;
 export type NewStep = typeof steps.$inferInsert;
+export type StepComment = typeof stepComments.$inferSelect;
+export type NewStepComment = typeof stepComments.$inferInsert;

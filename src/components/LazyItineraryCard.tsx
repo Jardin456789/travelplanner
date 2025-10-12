@@ -11,7 +11,7 @@ interface LazyItineraryCardProps {
   isSelected?: boolean;
   isPast?: boolean;
   onSelect?: () => void;
-  onDelete?: () => void;
+  onEdit?: () => void;
   index?: number;
 }
 
@@ -38,7 +38,7 @@ export default function LazyItineraryCard({
   isSelected = false,
   isPast = false,
   onSelect,
-  onDelete
+  onEdit,
 }: LazyItineraryCardProps) {
   const { elementRef, isVisible } = useLazyImage();
 
@@ -57,7 +57,8 @@ export default function LazyItineraryCard({
           isSelected={isSelected}
           isPast={isPast}
           onSelect={onSelect}
-          onDelete={onDelete}
+          onEdit={onEdit}
+          disableDrag
         />
       ) : (
         // Placeholder pendant le chargement

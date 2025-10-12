@@ -13,13 +13,23 @@ export const TransportMarkers: React.FC<TransportMarkersProps> = ({ segments }) 
     <>
       {segments.map((segment) => {
         if (!segment) return null;
+        const position = segment.position;
+        const hasValidPosition =
+          Array.isArray(position) &&
+          Number.isFinite(position[0]) &&
+          Number.isFinite(position[1]);
+
+        if (!hasValidPosition) {
+          return null;
+        }
+
         const IconComponent = getTransportIcon(segment.type as TransportType);
 
         return (
           <Marker
             key={`${segment.id}-${segment.type}`}
-            longitude={segment.position[0]}
-            latitude={segment.position[1]}
+            longitude={position[0]}
+            latitude={position[1]}
             onClick={(e) => {
               e.originalEvent.stopPropagation(); // Empêcher la propagation du clic
             }}

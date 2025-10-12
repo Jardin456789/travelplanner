@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { DayItinerary, TransportType } from '@/types/travel';
-import { Plane, Bus, Bike, Car } from 'lucide-react';
+import { Plane, Bus, Bike, Car, Train } from 'lucide-react';
 import { toast } from '@/components/ui/toaster';
 import { useUpdateStep } from '@/hooks/useTravelQueries';
 
@@ -14,6 +14,7 @@ interface TransportIconProps {
 const transportOptions = [
   { type: 'plane', icon: Plane, label: 'Avion', color: 'text-gray-800' },
   { type: 'bus', icon: Bus, label: 'Bus', color: 'text-gray-800' },
+  { type: 'train', icon: Train, label: 'Train', color: 'text-gray-800' },
   { type: 'bike', icon: Bike, label: 'Vélo', color: 'text-gray-800' },
   { type: 'car', icon: Car, label: 'Voiture', color: 'text-gray-800' },
 ] as const;
@@ -46,8 +47,8 @@ export default function TransportIcon({ fromStep, itineraryId }: TransportIconPr
         order: fromStep.order,
         activities: fromStep.activities,
         transportToNext: {
-          type: transportType,
-          ...fromStep.transportToNext // Préserve les autres propriétés existantes
+          ...(fromStep.transportToNext ?? {}),
+          type: transportType // Force la mise à jour du type choisi
         },
         bikeSegment: fromStep.bikeSegment
       });

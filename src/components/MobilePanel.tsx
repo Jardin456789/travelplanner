@@ -17,7 +17,7 @@ interface MobilePanelProps {
   currentDateStepIndex: number;
   itineraryId: number;
   onSelectStep: (step: DayItinerary) => void;
-  onDeleteStep: (step: DayItinerary) => void;
+  onEditStep: (step: DayItinerary) => void;
   onMobileMonthChange: (month: string) => void;
   onTouchStart: (e: React.TouchEvent) => void;
   onTouchMove: (e: React.TouchEvent) => void;
@@ -36,7 +36,7 @@ export default function MobilePanel({
   currentDateStepIndex,
   itineraryId,
   onSelectStep,
-  onDeleteStep,
+  onEditStep,
   onMobileMonthChange,
   onTouchStart,
   onTouchMove,
@@ -111,7 +111,8 @@ export default function MobilePanel({
                   isSelected={selectedStep?.order === currentMobileStep.order}
                   isPast={isBefore(parseISO(currentMobileStep.date), clientCurrentDate)}
                   onSelect={() => onSelectStep(currentMobileStep)}
-                  onDelete={() => onDeleteStep(currentMobileStep)}
+                  onEdit={() => onEditStep(currentMobileStep)}
+                  disableDrag
                 />
               </div>
 

@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import type { Destination, DayItinerary, Itinerary } from '@/types/travel';
+import type { Destination, DayItinerary, Itinerary, StepComment } from '@/types/travel';
 import { CACHE_TIMES } from '@/lib/query-config';
 
 // Query Keys
@@ -9,6 +9,7 @@ export const queryKeys = {
   destinations: ['destinations'] as const,
   steps: (itineraryId: string) => ['steps', itineraryId] as const,
   step: (id: string) => ['step', id] as const,
+  comments: (stepId: string) => ['comments', stepId] as const,
 };
 
 // Hooks pour les requêtes de données
@@ -82,6 +83,22 @@ export function useStep(id: number) {
       return response.json();
     },
     enabled: !!id,
+    staleTime: CACHE_TIMES.REALTIME,
+  });
+}
+
+export function useStepComments(stepId?: number) {
+  return useQuery({
+    queryKey: stepId ? queryKeys.comments(stepId.toString()) : ['comments'],
+    queryFn: async (): Promise<StepComment[]> => {
+      if (!stepId) return [];
+      const response = await fetch(`/api/comments?stepId=${stepId}`);
+      if (!response.ok) {
+        throw new Error('Erreur lors de la récupération des commentaires');
+      }
+      return response.json();
+    },
+    enabled: !!stepId,
     staleTime: CACHE_TIMES.REALTIME,
   });
 }
@@ -217,6 +234,33 @@ export function useUpdateStep() {
           queryKey: queryKeys.step(variables.id.toString())
         });
       }
+    },
+  });
+}
+
+export function useCreateComment() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: { stepId: number; author?: string; content: string }) => {
+      const response = await fetch('/api/comments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        throw new Error('Erreur lors de l\'ajout du commentaire');
+      }
+
+      return response.json() as Promise<StepComment>;
+    },
+    onSuccess: (comment) => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.comments(comment.stepId.toString()),
+      });
     },
   });
 }

@@ -17,7 +17,6 @@ export * from '../primitives/spacer';
 
 // App components
 export * from './app-header';
-export * from './theme-selector';
 
 // Re-export UI components (updated)
 export { Button, buttonVariants } from '../../components/ui/button';

@@ -57,7 +57,7 @@ export default function MapPointSelector({
         essential: true,
       });
     }
-  }, [selectedCoordinates?.lat, selectedCoordinates?.lng]);
+  }, [selectedCoordinates]);
 
   const marker = useMemo(() => {
     if (!selectedCoordinates) {
@@ -103,4 +103,3 @@ export default function MapPointSelector({
     </div>
   );
 }
-

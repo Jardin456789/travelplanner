@@ -10,6 +10,7 @@ import { useDestinationGroups } from '@/hooks/useDestinationGroups';
 import { useTransportSegments } from '@/hooks/useTransportSegments';
 import { TransportMarkers } from './TransportMarkers';
 import { MapLayers } from './MapLayers';
+import { LocateFixed } from 'lucide-react';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
 interface MapProps {
@@ -17,9 +18,8 @@ interface MapProps {
   dayItineraries?: DayItinerary[];
   center?: [number, number];
   zoom?: number;
+  currentStep?: DayItinerary | null;
   className?: string;
-  mapStyle?: string;
-  onStyleChange?: (style: string) => void;
   selectedStep?: DayItinerary | null;
   onStepSelect?: (step: DayItinerary) => void;
   onMonthOpen?: (monthKey: string) => void;
@@ -71,8 +71,8 @@ export default function TravelMap({
   dayItineraries = [],
   center: providedCenter,
   zoom: providedZoom,
+  currentStep,
   className = "h-96 w-full rounded-lg",
-  mapStyle = MAPBOX_STYLES.streets,
   selectedStep,
   onStepSelect,
   onMonthOpen
@@ -81,8 +81,9 @@ export default function TravelMap({
   const [mapCenter, setMapCenter] = useState<[number, number] | undefined>(providedCenter);
   const [currentZoomLevel, setCurrentZoomLevel] = useState<number>(providedZoom || 6);
   const mapRef = useRef<MapRef>(null);
+  const containerClassName = className ? `relative ${className}` : 'relative';
 
-  // L'étape actuelle est déterminée par le parent (selectedStep)
+  // L'étape du jour est fournie par le parent (currentStep) tandis que selectedStep reflète la sélection utilisateur
 
   // Centrage automatique sur l'étape sélectionnée (sans changer le zoom)
   useEffect(() => {
@@ -105,6 +106,8 @@ export default function TravelMap({
 
   // Calculer automatiquement le centre et zoom optimaux pour l'itinéraire
   const { center, zoom } = useMemo(() => {
+    const focusStep = selectedStep ?? currentStep ?? null;
+
     // Si on a un état local (zoom sur une étape sélectionnée), l'utiliser
     if (mapCenter && currentZoomLevel !== undefined) {
       return { center: mapCenter, zoom: currentZoomLevel };
@@ -116,8 +119,8 @@ export default function TravelMap({
     }
 
     // Sinon, calculer automatiquement en privilégiant l'étape actuelle
-    return calculateOptimalView(destinations, dayItineraries, selectedStep);
-  }, [destinations, dayItineraries, selectedStep, providedCenter, providedZoom, mapCenter, currentZoomLevel]);
+    return calculateOptimalView(destinations, dayItineraries, focusStep);
+  }, [destinations, dayItineraries, selectedStep, currentStep, providedCenter, providedZoom, mapCenter, currentZoomLevel]);
 
   // Utiliser les hooks pour les données
   const destinationGroups = useDestinationGroups(dayItineraries);
@@ -191,7 +194,7 @@ export default function TravelMap({
   // Utiliser uniquement la variable d'environnement
   const mapboxAccessToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
   const hasMapboxToken = Boolean(mapboxAccessToken);
-  const finalMapStyle: string | Style = hasMapboxToken ? mapStyle : FREE_STYLES.osm;
+  const finalMapStyle: string | Style = hasMapboxToken ? MAPBOX_STYLES.streets : FREE_STYLES.osm;
 
   // Gestionnaire de clic pour les clusters et points
   const handleMapClick = useCallback((event: MapMouseEvent) => {
@@ -265,8 +268,33 @@ export default function TravelMap({
     }
   }, [destinationGroups, dayItineraries, onMonthOpen, onStepSelect, setSelectedDestination]);
 
+  const markerStep = currentStep ?? selectedStep ?? null;
+  const handleLocateCurrentStep = useCallback(() => {
+    if (!currentStep || !mapRef.current) return;
+    const { lng, lat } = currentStep.destination.coordinates;
+    const targetZoom = currentZoomLevel < 7 ? 7 : currentZoomLevel;
+    setMapCenter([lat, lng]);
+    mapRef.current.flyTo({
+      center: [lng, lat],
+      zoom: targetZoom,
+      duration: 1200,
+      essential: true
+    });
+  }, [currentStep, currentZoomLevel]);
+
   return (
-    <div className={className}>
+    <div className={containerClassName}>
+      {currentStep && (
+        <button
+          type="button"
+          onClick={handleLocateCurrentStep}
+          className="absolute top-4 left-4 z-20 inline-flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white/90 text-gray-700 shadow-md transition hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2"
+          aria-label="Localiser l&apos;étape du jour"
+        >
+          <LocateFixed className="h-5 w-5" />
+          <span className="sr-only">Localiser l&apos;étape du jour</span>
+        </button>
+      )}
       <Map
         ref={mapRef}
         mapboxAccessToken={mapboxAccessToken}
@@ -287,11 +315,11 @@ export default function TravelMap({
         <MapLayers routeData={routeData} destinationsGeoJson={destinationsGeoJson} />
         <TransportMarkers segments={transportSegments} />
 
-        {/* GIF au-dessus de l'étape actuelle sur la carte */}
-        {selectedStep && (
+        {/* GIF au-dessus de l'étape du jour pour visualiser la progression */}
+        {markerStep && (
           <Marker
-            longitude={selectedStep.destination.coordinates.lng}
-            latitude={selectedStep.destination.coordinates.lat}
+            longitude={markerStep.destination.coordinates.lng}
+            latitude={markerStep.destination.coordinates.lat}
             offset={[0, -32]}
             style={{ zIndex: 10 }}
           >

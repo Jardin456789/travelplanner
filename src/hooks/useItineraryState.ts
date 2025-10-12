@@ -1,15 +1,17 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useReorderSteps } from './useTravelQueries';
+import { useQueryClient } from '@tanstack/react-query';
 import type { DayItinerary } from '@/types/travel';
+import { queryKeys, useReorderSteps } from './useTravelQueries';
 
 export function useItineraryState(
   currentStep: DayItinerary | null,
-  sortedDayItineraries: DayItinerary[]
+  sortedDayItineraries: DayItinerary[],
+  itineraryId: number
 ) {
   // États de base
   const [selectedStep, setSelectedStep] = useState<DayItinerary | null>(null);
   const [isAddStepOpen, setIsAddStepOpen] = useState(false);
-  const [isReorderMode, setIsReorderMode] = useState(false);
+  const [editingStep, setEditingStep] = useState<DayItinerary | null>(null);
   const [isSavingOrder, setIsSavingOrder] = useState(false);
   const [reorderError, setReorderError] = useState<string | null>(null);
   const [hasInitializedCurrentStep, setHasInitializedCurrentStep] = useState(false);
@@ -29,7 +31,7 @@ export function useItineraryState(
   const previousStepCountRef = useRef<number>(sortedDayItineraries.length);
   const hasInitializedNewStepRef = useRef(false);
 
-  // Mutations
+  const queryClient = useQueryClient();
   const reorderStepsMutation = useReorderSteps();
 
   // Fonctions utilitaires
@@ -53,42 +55,65 @@ export function useItineraryState(
     if (selectedStep?.id === deletedStep.id) {
       setSelectedStep(null);
     }
-  }, [selectedStep]);
+    if (editingStep?.id === deletedStep.id) {
+      setEditingStep(null);
+    }
+  }, [selectedStep, editingStep]);
 
   const handleReorder = useCallback(async (updatedSteps: DayItinerary[]) => {
-    const canReorder = sortedDayItineraries.length > 0 && sortedDayItineraries.every(step => Boolean(step.id));
-
-    if (!canReorder) {
-      setReorderError("Impossible de réordonner tant que toutes les étapes ne sont pas synchronisées.");
-      throw new Error('Reorder not allowed');
+    if (!itineraryId) {
+      return;
+    }
+    if (updatedSteps.length === 0) {
+      return;
     }
 
-    const payload = updatedSteps.map((step) => {
-      if (!step.id) {
-        throw new Error('Étape manquante, impossible de mettre à jour son ordre.');
-      }
-      return {
-        id: step.id as number,
-        order: step.order,
-      };
-    });
+    const stepsWithIds = updatedSteps.filter((step) => Boolean(step.id));
+    if (stepsWithIds.length !== updatedSteps.length) {
+      setReorderError('Impossible de réordonner des étapes non synchronisées.');
+      return;
+    }
+
+    const mappedSteps = stepsWithIds.map((step, index) => ({
+      ...step,
+      order: index + 1,
+    }));
+
+    const payload = mappedSteps.map((step) => ({
+      id: step.id as number,
+      order: step.order,
+    }));
+
+    const queryKey = queryKeys.steps(itineraryId.toString());
+    const previousData = queryClient.getQueryData<DayItinerary[]>(queryKey);
+
+    // Mise à jour optimiste
+    queryClient.setQueryData(queryKey, mappedSteps);
 
     setIsSavingOrder(true);
     setReorderError(null);
 
     try {
       await reorderStepsMutation.mutateAsync({ steps: payload });
+      setSelectedStep((current) => {
+        if (!current) return current;
+        const updated = mappedSteps.find((step) => step.id === current.id);
+        return updated ?? current;
+      });
     } catch (error) {
       console.error('Failed to reorder steps', error);
+      if (previousData) {
+        queryClient.setQueryData(queryKey, previousData);
+      }
       const message = error instanceof Error
         ? error.message
-        : 'Une erreur est survenue lors de la mise à jour de l\'ordre.';
+        : 'Une erreur est survenue lors de la réorganisation.';
       setReorderError(message);
       throw error;
     } finally {
       setIsSavingOrder(false);
     }
-  }, [sortedDayItineraries, reorderStepsMutation]);
+  }, [itineraryId, queryClient, reorderStepsMutation]);
 
   // Effets
   
@@ -152,25 +177,35 @@ export function useItineraryState(
     });
   }, [currentStep]);
 
+  const startEditingStep = useCallback((step: DayItinerary) => {
+    setEditingStep(step);
+    setSelectedStep(step);
+  }, []);
+
+  const cancelEditingStep = useCallback(() => {
+    setEditingStep(null);
+  }, []);
+
   return {
     // États
     selectedStep,
     isAddStepOpen,
-    isReorderMode,
     isSavingOrder,
     reorderError,
     expandedMonths,
+    editingStep,
 
     // Setters
     setSelectedStep,
     setIsAddStepOpen,
-    setIsReorderMode,
-    setReorderError,
+    setEditingStep,
 
     // Fonctions
     toggleMonth,
     openMonth,
     handleDeleteStep,
     handleReorder,
+    startEditingStep,
+    cancelEditingStep,
   };
 }

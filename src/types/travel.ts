@@ -66,6 +66,14 @@ export interface DayItinerary {
   updatedAt?: string;
 }
 
+export interface StepComment {
+  id: number;
+  stepId: number;
+  author?: string | null;
+  content: string;
+  createdAt: string;
+}
+
 export interface Itinerary {
   id: number;
   title: string;

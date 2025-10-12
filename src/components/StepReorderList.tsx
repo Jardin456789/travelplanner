@@ -71,8 +71,6 @@ function SortableStepItem({ step, isCurrent }: SortableItemProps) {
         <div className="text-xs text-gray-500 flex items-center gap-1">
           <Calendar className="h-3 w-3" />
           <span>{formatDate(step.date)}</span>
-          <span className="text-gray-300">•</span>
-          <span>Jour {step.order}</span>
           {isCurrent && (
             <span className="ml-2 rounded bg-green-100 px-1.5 py-0.5 text-[10px] font-semibold text-green-700">
               Aujourd&apos;hui

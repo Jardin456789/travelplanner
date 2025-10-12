@@ -1,19 +1,19 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useCurrentDate } from '@/lib/date-utils';
 import { parseISO, isBefore, isEqual } from 'date-fns';
 import dynamic from 'next/dynamic';
-import MapStyleSelector from '@/components/MapStyleSelector';
 import { Button } from '@/components/ui/button';
 import { useTravelData } from '@/hooks/useTravelData';
 import { AddStepDialog } from '@/components/AddStepDialog';
+import { EditStepDialog } from '@/components/EditStepDialog';
 import { useItineraryState } from '@/hooks/useItineraryState';
+import { TutorialDialog } from '@/components/TutorialDialog';
 import { useMobileNavigation } from '@/hooks/useMobileNavigation';
-import { useMonthGrouping } from '@/hooks/useMonthGrouping';
+import { useOnboardingTutorial } from '@/hooks/useOnboardingTutorial';
 import SidebarPanel from '@/components/SidebarPanel';
 import MobilePanel from '@/components/MobilePanel';
-import { MAPBOX_STYLES } from '@/components/Map';
 import { Plus } from 'lucide-react';
 
 // Dynamically import TravelMap component to avoid SSR issues with Mapbox
@@ -28,10 +28,9 @@ export default function Home() {
   const { loading, destinations, dayItineraries, itinerary } = useTravelData();
 
   // États de base
-  const [mapStyle, setMapStyle] = useState<string>(MAPBOX_STYLES.streets);
-
   // Utiliser la date actuelle côté client
   const clientCurrentDate = useCurrentDate();
+  const onboardingTutorial = useOnboardingTutorial();
 
   // Trier les étapes
   const sortedDayItineraries = useMemo(() => {
@@ -60,19 +59,13 @@ export default function Home() {
   }, [clientCurrentDate, sortedDayItineraries]);
 
   // Hooks personnalisés
-  const { groupedByMonth } = useMonthGrouping({ dayItineraries: sortedDayItineraries });
-  const itineraryState = useItineraryState(currentStep || null, sortedDayItineraries);
+  const itineraryId = itinerary?.id ?? 0;
+  const itineraryState = useItineraryState(currentStep || null, sortedDayItineraries, itineraryId);
   const mobileNav = useMobileNavigation({
     allSteps: sortedDayItineraries,
     selectedStep: itineraryState.selectedStep,
     onStepSelect: itineraryState.setSelectedStep,
   });
-
-  const canReorder = useMemo(
-    () => sortedDayItineraries.length > 0 && sortedDayItineraries.every(step => Boolean(step.id)),
-    [sortedDayItineraries]
-  );
-
 
   if (loading || !itinerary || sortedDayItineraries.length === 0) {
     return (
@@ -91,6 +84,19 @@ export default function Home() {
         existingDestinations={destinations}
         existingSteps={sortedDayItineraries}
       />
+      <EditStepDialog
+        isOpen={Boolean(itineraryState.editingStep)}
+        step={itineraryState.editingStep}
+        onRequestClose={itineraryState.cancelEditingStep}
+        itineraryId={itinerary.id}
+        existingDestinations={destinations}
+        existingSteps={sortedDayItineraries}
+        onStepDeleted={itineraryState.handleDeleteStep}
+      />
+      <TutorialDialog
+        open={onboardingTutorial.isOpen}
+        onClose={onboardingTutorial.closeTutorial}
+      />
       <div className="h-screen flex flex-col lg:flex-row">
       {/* Carte - Plein écran sur mobile, droite sur desktop */}
       <div className="flex-1 relative order-1 lg:order-2">
@@ -98,55 +104,22 @@ export default function Home() {
           destinations={destinations}
           dayItineraries={sortedDayItineraries}
           className="h-full w-full"
-          mapStyle={mapStyle}
-          onStyleChange={(style) => setMapStyle(style)}
+          currentStep={currentStep ?? null}
           selectedStep={itineraryState.selectedStep}
           onStepSelect={itineraryState.setSelectedStep}
           onMonthOpen={itineraryState.openMonth}
         />
 
-        {/* Sélecteur de style en haut à gauche */}
-        <div className="absolute top-4 left-4 z-10">
-          <MapStyleSelector
-            currentStyle={mapStyle}
-            onStyleChange={(style) => setMapStyle(style)}
-          />
-        </div>
-
-        {/* Bouton flottant d'ajout en haut à droite */}
-        <div className="absolute top-4 right-4 z-10">
+        {/* Bouton flottant d'ajout en bas à droite */}
+        <div className="absolute bottom-6 right-6 z-10">
           <Button
             size="icon"
             variant="default"
             aria-label="Ajouter une étape"
-            className="rounded-full shadow-lg"
+            className="rounded-full shadow-lg h-12 w-12"
             onClick={() => itineraryState.setIsAddStepOpen(true)}
           >
-            <Plus className="w-4 h-4" />
-          </Button>
-        </div>
-
-        {/* Bouton desktop */}
-        <div className="hidden lg:flex absolute bottom-6 right-6 z-10">
-          <Button
-            size="lg"
-            className="shadow-xl"
-            onClick={() => itineraryState.setIsAddStepOpen(true)}
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Ajouter une étape
-          </Button>
-        </div>
-
-        {/* Bouton mobile */}
-        <div className="lg:hidden absolute bottom-5 right-4 z-10">
-          <Button
-            size="sm"
-            className="shadow-lg"
-            onClick={() => itineraryState.setIsAddStepOpen(true)}
-          >
-            <Plus className="w-3 h-3 mr-2" />
-            Ajouter une étape
+            <Plus className="w-5 h-5" />
           </Button>
         </div>
 
@@ -161,7 +134,7 @@ export default function Home() {
           currentDateStepIndex={mobileNav.currentDateStepIndex}
           itineraryId={itinerary.id}
           onSelectStep={itineraryState.setSelectedStep}
-          onDeleteStep={itineraryState.handleDeleteStep}
+          onEditStep={itineraryState.startEditingStep}
           onMobileMonthChange={mobileNav.handleMobileMonthChange}
           onTouchStart={mobileNav.onTouchStart}
           onTouchMove={mobileNav.onTouchMove}
@@ -174,17 +147,14 @@ export default function Home() {
         {/* Panel latéral desktop */}
         <SidebarPanel
           itinerary={itinerary}
-          groupedByMonth={groupedByMonth}
+          steps={sortedDayItineraries}
           expandedMonths={itineraryState.expandedMonths}
           selectedStep={itineraryState.selectedStep}
-          isReorderMode={itineraryState.isReorderMode}
-          canReorder={canReorder}
-          reorderError={itineraryState.reorderError}
           isSavingOrder={itineraryState.isSavingOrder}
+          reorderError={itineraryState.reorderError}
           onToggleMonth={itineraryState.toggleMonth}
           onSelectStep={itineraryState.setSelectedStep}
-          onDeleteStep={itineraryState.handleDeleteStep}
-          onToggleReorderMode={() => itineraryState.setIsReorderMode(!itineraryState.isReorderMode)}
+          onEditStep={itineraryState.startEditingStep}
           onReorder={itineraryState.handleReorder}
           onOpenAddStep={() => itineraryState.setIsAddStepOpen(true)}
         />
