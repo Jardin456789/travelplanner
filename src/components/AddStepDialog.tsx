@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { DayItinerary, Destination } from '@/types/travel';
 import { Button } from './ui/button';
 import { useUpdateStep, useCreateDestination } from '@/hooks/useTravelQueries';
@@ -14,6 +15,11 @@ type PlaceSuggestion = {
   coordinates?: { lat: number; lng: number };
   types?: string[];
 };
+
+const MapPointSelector = dynamic(() => import('./MapPointSelector'), {
+  ssr: false,
+  loading: () => <div className="h-56 w-full animate-pulse rounded-lg bg-gray-100" />,
+});
 
 type PlaceDetails = {
   id: string;
@@ -50,6 +56,8 @@ export function AddStepDialog({
   const [formDate, setFormDate] = useState('');
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isMapSelectionOpen, setIsMapSelectionOpen] = useState(false);
+  const [mapSelectedCoordinates, setMapSelectedCoordinates] = useState<{ lat: number; lng: number } | null>(null);
   const languageCode: 'fr' | 'en' = 'fr';
 
   // Utiliser les hooks de mutation React Query
@@ -84,6 +92,8 @@ export function AddStepDialog({
       setNotes('');
       setIsSubmitting(false);
       setSubmissionError(null);
+      setIsMapSelectionOpen(false);
+      setMapSelectedCoordinates(null);
     }
   }, [isOpen, existingSteps]);
 
@@ -131,6 +141,8 @@ export function AddStepDialog({
     setNotes('');
     setIsSubmitting(false);
     setSubmissionError(null);
+    setIsMapSelectionOpen(false);
+    setMapSelectedCoordinates(null);
   }, []);
 
   const handleSuggestionSelect = useCallback(async (suggestion: PlaceSuggestion) => {
@@ -156,8 +168,9 @@ export function AddStepDialog({
       setSearchQuery(suggestion.primaryText);
       setSuggestions([]);
       if (data.place.formattedAddress) {
-        setNotes(data.place.formattedAddress);
+        setNotes((previousNotes) => (previousNotes.trim() ? previousNotes : data.place.formattedAddress));
       }
+      setMapSelectedCoordinates(data.place.coordinates);
     } catch (error) {
       console.error(error);
       setSubmissionError(
@@ -167,6 +180,56 @@ export function AddStepDialog({
       setIsLoadingPlaceDetails(false);
     }
   }, [languageCode]);
+
+  const handleMapPointSelect = useCallback(async (coordinates: { lat: number; lng: number }) => {
+    setMapSelectedCoordinates(coordinates);
+    setSubmissionError(null);
+    setIsLoadingPlaceDetails(true);
+
+    try {
+      const response = await fetch('/api/places/reverse', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          coordinates,
+          languageCode,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || 'Impossible de récupérer les informations du lieu sélectionné.');
+      }
+
+      const data = (await response.json()) as { place: PlaceDetails };
+      setSelectedPlace(data.place);
+      setSearchQuery(data.place.name || 'Point sélectionné');
+      if (data.place.formattedAddress) {
+        setNotes((previousNotes) => (previousNotes.trim() ? previousNotes : data.place.formattedAddress));
+      }
+    } catch (error) {
+      console.error('Reverse geocoding error', error);
+      setSelectedPlace({
+        id: `${coordinates.lat.toFixed(5)},${coordinates.lng.toFixed(5)}`,
+        name: 'Point sélectionné',
+        formattedAddress: '',
+        coordinates,
+        types: [],
+      });
+      setSearchQuery('Point sélectionné');
+      setSubmissionError(
+        'Informations précises indisponibles pour ce point. Vous pouvez nommer et décrire l’étape manuellement.'
+      );
+    } finally {
+      setIsLoadingPlaceDetails(false);
+    }
+  }, [languageCode]);
+
+  useEffect(() => {
+    if (selectedPlace) {
+      setMapSelectedCoordinates(selectedPlace.coordinates);
+    }
+  }, [selectedPlace]);
 
   const handleSubmit = useCallback(async () => {
     if (!selectedPlace) {
@@ -273,13 +336,23 @@ export function AddStepDialog({
 
         <div className="px-5 py-4 space-y-4">
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Destination</label>
+            <div className="mb-1 flex items-center justify-between">
+              <label className="block text-xs font-medium text-gray-600">Destination</label>
+              <button
+                type="button"
+                className="text-xs font-medium text-blue-600 hover:text-blue-700"
+                onClick={() => setIsMapSelectionOpen((current) => !current)}
+              >
+                {isMapSelectionOpen ? 'Fermer la carte' : 'Sélectionner un point sur la carte'}
+              </button>
+            </div>
             <input
               type="text"
               value={searchQuery}
               onChange={(event) => {
                 setSearchQuery(event.target.value);
                 setSelectedPlace(null);
+                setMapSelectedCoordinates(null);
               }}
               placeholder="Par exemple : Almaty, Kazakhstan"
               className="w-full rounded border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none"
@@ -302,6 +375,26 @@ export function AddStepDialog({
                   </li>
                 ))}
               </ul>
+            )}
+
+            {isMapSelectionOpen && (
+              <div className="mt-4 space-y-3 text-xs text-gray-600">
+                <div className="rounded-md border border-blue-100 bg-blue-50 px-3 py-2 text-blue-800">
+                  Cliquez sur la carte pour positionner votre nouvelle étape. Vous pourrez ajuster son nom ensuite si nécessaire.
+                </div>
+                <MapPointSelector
+                  selectedCoordinates={mapSelectedCoordinates}
+                  onSelect={handleMapPointSelect}
+                  className="h-56"
+                />
+                {mapSelectedCoordinates && (
+                  <div className="rounded border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-700">
+                    <div className="font-semibold text-gray-800">Point sélectionné</div>
+                    <p>Latitude : {mapSelectedCoordinates.lat.toFixed(6)}</p>
+                    <p>Longitude : {mapSelectedCoordinates.lng.toFixed(6)}</p>
+                  </div>
+                )}
+              </div>
             )}
           </div>
 
@@ -338,7 +431,7 @@ export function AddStepDialog({
             />
           </div>
 
-          {selectedPlace && (
+          {selectedPlace && !isMapSelectionOpen && (
             <div className="rounded border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-800">
               <div className="font-semibold">Coordonnées GPS</div>
               <p>Latitude : {selectedPlace.coordinates.lat.toFixed(6)}</p>
