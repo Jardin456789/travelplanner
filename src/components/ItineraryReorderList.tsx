@@ -60,6 +60,13 @@ function SortableStepItem<T extends ReorderableStep>({
       : 'border-slate-200/80 hover:border-sky-200/70 hover:shadow-md',
     disablePointer && 'cursor-not-allowed opacity-40',
   );
+  const {
+    role: ignoredRole,
+    'aria-roledescription': ignoredAriaRoleDescription,
+    ...sortableAttributes
+  } = attributes;
+  void ignoredRole;
+  void ignoredAriaRoleDescription;
 
   return (
     <li
@@ -68,7 +75,7 @@ function SortableStepItem<T extends ReorderableStep>({
       className={cardClassName}
       role="listitem"
       aria-roledescription="élément réorganisable"
-      {...(!disablePointer ? { ...attributes, ...listeners } : {})}
+      {...(!disablePointer ? { ...sortableAttributes, ...listeners } : {})}
     >
       <div
         aria-hidden="true"

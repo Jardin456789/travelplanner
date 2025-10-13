@@ -106,7 +106,7 @@ export async function POST(request: NextRequest) {
       })
       .returning();
 
-    const comment = Array.isArray(inserted) ? inserted[0] : inserted.rows?.[0];
+    const [comment] = inserted;
 
     if (!comment) {
       return NextResponse.json({ error: 'Le commentaire n’a pas pu être créé' }, { status: 500 });

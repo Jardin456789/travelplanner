@@ -250,7 +250,7 @@ export function useCreateComment() {
   return useMutation({
     mutationFn: async (data: {
       stepId: number;
-      author: string;
+      author?: string;
       content: string;
       parentId?: number;
     }) => {

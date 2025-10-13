@@ -7,6 +7,7 @@ import {
   type SyntheticEvent,
   type KeyboardEvent as ReactKeyboardEvent,
   type FormEvent,
+  type ReactElement,
 } from 'react';
 import { DayItinerary, TransportType, StepCommentThread } from '@/types/travel';
 import {
@@ -76,6 +77,7 @@ export default function ItineraryCard({
   const transportLabel =
     transportDetail?.label ??
     (transportType ? transportType.charAt(0).toUpperCase() + transportType.slice(1) : '');
+  const transportDuration = dayItinerary.transportToNext?.duration;
   const stepId = dayItinerary.id;
   const { data: comments = [], isLoading: areCommentsLoading } = useStepComments(stepId);
   const createCommentMutation = useCreateComment();
@@ -138,11 +140,12 @@ export default function ItineraryCard({
       }
 
       try {
-        const authorValue = commentAuthor.trim() || undefined;
+        const authorValue = commentAuthor.trim();
+
         await createCommentMutation.mutateAsync({
           stepId,
-          author: authorValue,
           content: commentContent.trim(),
+          ...(authorValue ? { author: authorValue } : {}),
         });
         setCommentContent('');
       } catch (error) {
@@ -186,7 +189,7 @@ export default function ItineraryCard({
     [activeReplyId, createCommentMutation, replyAuthor, replyContent, stepId],
   );
 
-  function renderComment(comment: StepCommentThread, depth = 0): JSX.Element {
+  function renderComment(comment: StepCommentThread, depth = 0): ReactElement {
     const displayName = comment.author?.trim() || 'Invité';
     const initial = displayName.charAt(0).toUpperCase();
     const isReplyFormVisible = activeReplyId === comment.id;
@@ -405,10 +408,8 @@ export default function ItineraryCard({
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium capitalize text-slate-700">{transportLabel}</p>
-                  {dayItinerary.transportToNext.duration && (
-                    <p className="text-xs text-slate-500">
-                      {dayItinerary.transportToNext.duration}
-                    </p>
+                  {transportDuration && (
+                    <p className="text-xs text-slate-500">{transportDuration}</p>
                   )}
                 </div>
               </div>

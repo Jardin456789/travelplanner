@@ -1,4 +1,13 @@
-import { pgTable, text, jsonb, integer, serial, timestamp, index } from 'drizzle-orm/pg-core';
+import {
+  pgTable,
+  text,
+  jsonb,
+  integer,
+  serial,
+  timestamp,
+  index,
+  foreignKey,
+} from 'drizzle-orm/pg-core';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 
 // Itineraries table
@@ -101,9 +110,7 @@ export const stepComments = pgTable(
     stepId: integer('step_id')
       .references(() => steps.id, { onDelete: 'cascade' })
       .notNull(),
-    parentId: integer('parent_id')
-      .references(() => stepComments.id, { onDelete: 'cascade' })
-      .default(null),
+    parentId: integer('parent_id').default(null),
     author: text('author').notNull(),
     content: text('content').notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
@@ -111,6 +118,11 @@ export const stepComments = pgTable(
   (table) => ({
     stepIdx: index('step_comments_step_idx').on(table.stepId),
     parentIdx: index('step_comments_parent_idx').on(table.parentId),
+    parentFk: foreignKey({
+      columns: [table.parentId],
+      foreignColumns: [table.id],
+      name: 'step_comments_parent_fk',
+    }).onDelete('cascade'),
   }),
 );
 
