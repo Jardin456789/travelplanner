@@ -110,7 +110,7 @@ export const stepComments = pgTable(
     stepId: integer('step_id')
       .references(() => steps.id, { onDelete: 'cascade' })
       .notNull(),
-    parentId: integer('parent_id').default(null),
+    parentId: integer('parent_id'),
     author: text('author').notNull(),
     content: text('content').notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),

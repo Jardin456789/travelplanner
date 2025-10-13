@@ -141,12 +141,20 @@ export default function ItineraryCard({
 
       try {
         const authorValue = commentAuthor.trim();
-
-        await createCommentMutation.mutateAsync({
+        const payload: {
+          stepId: number;
+          content: string;
+          author?: string;
+        } = {
           stepId,
           content: commentContent.trim(),
-          ...(authorValue ? { author: authorValue } : {}),
-        });
+        };
+
+        if (authorValue) {
+          payload.author = authorValue;
+        }
+
+        await createCommentMutation.mutateAsync(payload);
         setCommentContent('');
       } catch (error) {
         console.error("Erreur lors de l'ajout du commentaire:", error);
