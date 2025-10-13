@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import { getDb } from '@/lib/db';
 import { stepComments } from '@/lib/db/schema';
 import { eq, asc } from 'drizzle-orm';
 import { z } from 'zod';
@@ -13,6 +13,7 @@ const commentInputSchema = z.object({
 
 export async function GET(request: NextRequest) {
   try {
+    const db = getDb();
     const { searchParams } = new URL(request.url);
     const stepIdParam = searchParams.get('stepId');
 
@@ -65,6 +66,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const db = getDb();
     const body = await request.json();
     const validatedInput = commentInputSchema.parse(body);
 
