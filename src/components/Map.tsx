@@ -5,7 +5,7 @@ import Map, { Popup, NavigationControl, ScaleControl, MapRef, Marker } from 'rea
 import type { MapMouseEvent, Style } from 'mapbox-gl';
 import Image from 'next/image';
 import { Destination, DayItinerary } from '@/types/travel';
-import { calculateOptimalView } from '@/lib/map-utils';
+import { calculateOptimalView, sortStepsChronologically } from '@/lib/map-utils';
 import { useDestinationGroups } from '@/hooks/useDestinationGroups';
 import { useTransportSegments } from '@/hooks/useTransportSegments';
 import { TransportMarkers } from './TransportMarkers';
@@ -48,23 +48,23 @@ export const FREE_STYLES = {
         tiles: [
           'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png',
           'https://b.tile.openstreetmap.org/{z}/{x}/{y}.png',
-          'https://c.tile.openstreetmap.org/{z}/{x}/{y}.png'
+          'https://c.tile.openstreetmap.org/{z}/{x}/{y}.png',
         ],
         tileSize: 256,
-        attribution: '© OpenStreetMap contributors'
-      }
+        attribution: '© OpenStreetMap contributors',
+      },
     },
-    layers: [{
-      id: 'osm-tiles',
-      type: 'raster' as const,
-      source: 'osm-tiles',
-      minzoom: 0,
-      maxzoom: 19
-    }]
-  }
+    layers: [
+      {
+        id: 'osm-tiles',
+        type: 'raster' as const,
+        source: 'osm-tiles',
+        minzoom: 0,
+        maxzoom: 19,
+      },
+    ],
+  },
 };
-
-
 
 export default function TravelMap({
   destinations,
@@ -72,10 +72,10 @@ export default function TravelMap({
   center: providedCenter,
   zoom: providedZoom,
   currentStep,
-  className = "h-96 w-full rounded-lg",
+  className = 'h-96 w-full rounded-lg',
   selectedStep,
   onStepSelect,
-  onMonthOpen
+  onMonthOpen,
 }: MapProps) {
   const [selectedDestination, setSelectedDestination] = useState<Destination | null>(null);
   const [mapCenter, setMapCenter] = useState<[number, number] | undefined>(providedCenter);
@@ -99,7 +99,7 @@ export default function TravelMap({
         center: [coordinates.lng, coordinates.lat],
         zoom: currentZoom, // Garder le zoom actuel
         duration: 1500,
-        essential: true
+        essential: true,
       });
     }
   }, [selectedStep]);
@@ -120,7 +120,16 @@ export default function TravelMap({
 
     // Sinon, calculer automatiquement en privilégiant l'étape actuelle
     return calculateOptimalView(destinations, dayItineraries, focusStep);
-  }, [destinations, dayItineraries, selectedStep, currentStep, providedCenter, providedZoom, mapCenter, currentZoomLevel]);
+  }, [
+    destinations,
+    dayItineraries,
+    selectedStep,
+    currentStep,
+    providedCenter,
+    providedZoom,
+    mapCenter,
+    currentZoomLevel,
+  ]);
 
   // Utiliser les hooks pour les données
   const destinationGroups = useDestinationGroups(dayItineraries);
@@ -128,19 +137,30 @@ export default function TravelMap({
 
   // Créer les données pour les lignes reliant les destinations
   const routeData = useMemo(() => {
-    if (dayItineraries.length < 2) return null;
+    const chronologicalSteps = sortStepsChronologically(dayItineraries);
+    if (chronologicalSteps.length < 2) return null;
 
-    const coordinates = dayItineraries
-      .sort((a, b) => a.order - b.order)
-      .map(day => [day.destination.coordinates.lng, day.destination.coordinates.lat] as [number, number]);
+    const coordinates = chronologicalSteps
+      .map((day) => {
+        const { lat, lng } = day.destination.coordinates;
+        if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+          return null;
+        }
+        return [lng, lat] as [number, number];
+      })
+      .filter((coord): coord is [number, number] => coord !== null);
+
+    if (coordinates.length < 2) {
+      return null;
+    }
 
     return {
       type: 'Feature' as const,
       properties: {},
       geometry: {
         type: 'LineString' as const,
-        coordinates
-      }
+        coordinates,
+      },
     };
   }, [dayItineraries]);
 
@@ -148,13 +168,15 @@ export default function TravelMap({
   const destinationsGeoJson = useMemo(() => {
     const features = destinationGroups.map((group, index) => {
       // Déterminer le statut du groupe
-      const isCurrentGroup = selectedStep &&
+      const isCurrentGroup =
+        selectedStep &&
         selectedStep.order >= group.startOrder &&
         selectedStep.order <= group.endOrder;
 
       const isPastGroup = selectedStep && group.endOrder < selectedStep.order;
 
-      const isSelectedGroup = selectedStep &&
+      const isSelectedGroup =
+        selectedStep &&
         selectedStep.order >= group.startOrder &&
         selectedStep.order <= group.endOrder;
 
@@ -169,18 +191,21 @@ export default function TravelMap({
           isSelectedStep: isSelectedGroup,
           dayIndex: index, // Index du groupe pour retrouver les étapes
           dayCount: group.days.length, // Nombre de jours dans ce lieu
-          days: group.days // Toutes les étapes du groupe
+          days: group.days, // Toutes les étapes du groupe
         },
         geometry: {
           type: 'Point' as const,
-          coordinates: [group.destination.coordinates.lng, group.destination.coordinates.lat] as [number, number]
-        }
+          coordinates: [group.destination.coordinates.lng, group.destination.coordinates.lat] as [
+            number,
+            number,
+          ],
+        },
       };
     });
 
     return {
       type: 'FeatureCollection' as const,
-      features
+      features,
     };
   }, [destinationGroups, selectedStep]);
 
@@ -197,76 +222,92 @@ export default function TravelMap({
   const finalMapStyle: string | Style = hasMapboxToken ? MAPBOX_STYLES.streets : FREE_STYLES.osm;
 
   // Gestionnaire de clic pour les clusters et points
-  const handleMapClick = useCallback((event: MapMouseEvent) => {
-    const features = event.target.queryRenderedFeatures(event.point, {
-      layers: ['clusters', 'unclustered-point']
-    });
+  const handleMapClick = useCallback(
+    (event: MapMouseEvent) => {
+      const features = event.target.queryRenderedFeatures(event.point, {
+        layers: ['clusters', 'unclustered-point'],
+      });
 
-    if (features.length > 0) {
-      const feature = features[0];
+      if (features.length > 0) {
+        const feature = features[0];
 
-      if (feature.layer.id === 'clusters') {
-        // Zoomer sur le cluster
-        const clusterId = feature.properties?.cluster_id;
-        if (!clusterId) return;
+        if (feature.layer.id === 'clusters') {
+          // Zoomer sur le cluster
+          const clusterId = feature.properties?.cluster_id;
+          if (!clusterId) return;
 
-        const mapboxSource = event.target.getSource('destinations');
-        (mapboxSource as { getClusterExpansionZoom: (id: number, callback: (err: Error | null, zoom: number) => void) => void }).getClusterExpansionZoom(clusterId, (err: Error | null, zoom: number) => {
-          if (err) return;
-          event.target.easeTo({
-            center: (feature.geometry as GeoJSON.Point).coordinates as [number, number],
-            zoom: zoom
-          });
-        });
-
-        // Ouvrir le mois correspondant dans le menu latéral
-        if (onMonthOpen) {
-          // Trouver les étapes proches du centre du cluster
-          const clusterCenter = (feature.geometry as GeoJSON.Point).coordinates as [number, number];
-          const [clusterLng, clusterLat] = clusterCenter;
-
-          // Chercher l'étape la plus proche du centre du cluster
-          let closestStep: DayItinerary | null = null;
-          let minDistance = Infinity;
-
-          dayItineraries.forEach((step) => {
-            const distance = Math.sqrt(
-              Math.pow(step.destination.coordinates.lng - clusterLng, 2) +
-              Math.pow(step.destination.coordinates.lat - clusterLat, 2)
-            );
-
-            if (distance < minDistance) {
-              minDistance = distance;
-              closestStep = step;
+          const mapboxSource = event.target.getSource('destinations');
+          (
+            mapboxSource as {
+              getClusterExpansionZoom: (
+                id: number,
+                callback: (err: Error | null, zoom: number) => void,
+              ) => void;
             }
+          ).getClusterExpansionZoom(clusterId, (err: Error | null, zoom: number) => {
+            if (err) return;
+            event.target.easeTo({
+              center: (feature.geometry as GeoJSON.Point).coordinates as [number, number],
+              zoom: zoom,
+            });
           });
 
-          if (closestStep && onMonthOpen) {
-            // Ouvrir le mois de cette étape
-            const stepDate = new Date((closestStep as DayItinerary).date);
-            const monthKey = stepDate.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }).toLowerCase().replace(' ', '-');
-            onMonthOpen(monthKey);
-          }
-        }
-      } else if (feature.layer.id === 'unclustered-point') {
-        // Sélectionner le groupe d'étapes (première étape du groupe)
-        const groupIndex = feature.properties?.dayIndex;
+          // Ouvrir le mois correspondant dans le menu latéral
+          if (onMonthOpen) {
+            // Trouver les étapes proches du centre du cluster
+            const clusterCenter = (feature.geometry as GeoJSON.Point).coordinates as [
+              number,
+              number,
+            ];
+            const [clusterLng, clusterLat] = clusterCenter;
 
-        if (groupIndex >= 0 && groupIndex < destinationGroups.length) {
-          const group = destinationGroups[groupIndex];
-          // Sélectionner la première étape du groupe
-          const firstDay = group.days[0];
-          if (firstDay) {
-            setSelectedDestination(firstDay.destination);
-            onStepSelect?.(firstDay);
+            // Chercher l'étape la plus proche du centre du cluster
+            let closestStep: DayItinerary | null = null;
+            let minDistance = Infinity;
+
+            dayItineraries.forEach((step) => {
+              const distance = Math.sqrt(
+                Math.pow(step.destination.coordinates.lng - clusterLng, 2) +
+                  Math.pow(step.destination.coordinates.lat - clusterLat, 2),
+              );
+
+              if (distance < minDistance) {
+                minDistance = distance;
+                closestStep = step;
+              }
+            });
+
+            if (closestStep && onMonthOpen) {
+              // Ouvrir le mois de cette étape
+              const stepDate = new Date((closestStep as DayItinerary).date);
+              const monthKey = stepDate
+                .toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })
+                .toLowerCase()
+                .replace(' ', '-');
+              onMonthOpen(monthKey);
+            }
+          }
+        } else if (feature.layer.id === 'unclustered-point') {
+          // Sélectionner le groupe d'étapes (première étape du groupe)
+          const groupIndex = feature.properties?.dayIndex;
+
+          if (groupIndex >= 0 && groupIndex < destinationGroups.length) {
+            const group = destinationGroups[groupIndex];
+            // Sélectionner la première étape du groupe
+            const firstDay = group.days[0];
+            if (firstDay) {
+              setSelectedDestination(firstDay.destination);
+              onStepSelect?.(firstDay);
+            }
           }
         }
+      } else {
+        // Clic sur un espace vide
+        setSelectedDestination(null);
       }
-    } else {
-      // Clic sur un espace vide
-      setSelectedDestination(null);
-    }
-  }, [destinationGroups, dayItineraries, onMonthOpen, onStepSelect, setSelectedDestination]);
+    },
+    [destinationGroups, dayItineraries, onMonthOpen, onStepSelect, setSelectedDestination],
+  );
 
   const markerStep = currentStep ?? selectedStep ?? null;
   const handleLocateCurrentStep = useCallback(() => {
@@ -278,7 +319,7 @@ export default function TravelMap({
       center: [lng, lat],
       zoom: targetZoom,
       duration: 1200,
-      essential: true
+      essential: true,
     });
   }, [currentStep, currentZoomLevel]);
 
@@ -289,7 +330,7 @@ export default function TravelMap({
           type="button"
           onClick={handleLocateCurrentStep}
           className="absolute top-4 left-4 z-20 inline-flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white/90 text-gray-700 shadow-md transition hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2"
-          aria-label="Localiser l&apos;étape du jour"
+          aria-label="Localiser l'étape du jour"
         >
           <LocateFixed className="h-5 w-5" />
           <span className="sr-only">Localiser l&apos;étape du jour</span>
@@ -346,7 +387,9 @@ export default function TravelMap({
             className="rounded-lg"
           >
             <div className="bg-white/95 backdrop-blur-md border border-white/30 p-3 max-w-xs rounded-lg shadow-xl">
-              <h3 className="font-semibold text-lg mb-2 text-gray-900">{selectedDestination.name}</h3>
+              <h3 className="font-semibold text-lg mb-2 text-gray-900">
+                {selectedDestination.name}
+              </h3>
               {selectedDestination.description && (
                 <p className="text-sm text-gray-700 mb-2">{selectedDestination.description}</p>
               )}

@@ -12,13 +12,13 @@ nvm use 20
 
 ## 🚀 Démarrage rapide
 
-1) Installer les dépendances
+1. Installer les dépendances
 
 ```bash
 npm install
 ```
 
-2) Configurer les APIs externes
+2. Configurer les APIs externes
 
 ```env
 # .env.local
@@ -31,13 +31,18 @@ Sans token Mapbox, un token de démo est utilisé (limite ~50k vues/mois).
 
 La recherche de destinations (autocomplete + coordonnées) passe désormais par l'API Geocoding de Mapbox. Si `MAPBOX_GEOCODING_ACCESS_TOKEN` est vide, le token public (`NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN`) sera utilisé côté serveur.
 
-3) Lancer le serveur de dev
+3. Lancer le serveur de dev
 
 ```bash
 npm run dev
 ```
 
 Ouvrir http://localhost:3000
+
+## 🧹 Qualité du code
+
+- `npm run format` applique Prettier sur les fichiers supportés (voire `format:check` pour CI).
+- Le hook Husky pré-commit formate automatiquement les fichiers modifiés, lance ESLint et exécute `vitest --run --changed`.
 
 ## 📦 Scripts utiles
 

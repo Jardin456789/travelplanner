@@ -17,7 +17,7 @@ export const itineraries = pgTable(
   },
   (table) => ({
     datesIdx: index('itineraries_dates_idx').on(table.startDate, table.endDate),
-  })
+  }),
 );
 
 // Destinations table
@@ -35,7 +35,7 @@ export const destinations = pgTable(
   },
   (table) => ({
     nameIdx: index('destinations_name_idx').on(table.name),
-  })
+  }),
 );
 
 // Steps table
@@ -43,20 +43,29 @@ export const steps = pgTable(
   'steps',
   {
     id: serial('id').primaryKey(),
-    itineraryId: integer('itinerary_id').references(() => itineraries.id, { onDelete: 'cascade' }).notNull(),
+    itineraryId: integer('itinerary_id')
+      .references(() => itineraries.id, { onDelete: 'cascade' })
+      .notNull(),
     date: text('date').notNull(),
-    destinationId: integer('destination_id').references(() => destinations.id, { onDelete: 'cascade' }).notNull(),
+    destinationId: integer('destination_id')
+      .references(() => destinations.id, { onDelete: 'cascade' })
+      .notNull(),
     notes: text('notes'),
     order: integer('order').notNull(),
-    activities: jsonb('activities').$type<Array<{
-      id: string;
-      title: string;
-      description?: string;
-      destinationId: string;
-      startTime?: string;
-      endTime?: string;
-      category?: string;
-    }>>().notNull().default([]),
+    activities: jsonb('activities')
+      .$type<
+        Array<{
+          id: string;
+          title: string;
+          description?: string;
+          destinationId: string;
+          startTime?: string;
+          endTime?: string;
+          category?: string;
+        }>
+      >()
+      .notNull()
+      .default([]),
     bikeSegment: jsonb('bike_segment').$type<{
       trajet: string;
       distance_km: number;
@@ -82,7 +91,7 @@ export const steps = pgTable(
   (table) => ({
     itineraryOrderIdx: index('steps_itinerary_order_idx').on(table.itineraryId, table.order),
     destinationDateIdx: index('steps_destination_date_idx').on(table.destinationId, table.date),
-  })
+  }),
 );
 
 export const stepComments = pgTable(
@@ -92,13 +101,17 @@ export const stepComments = pgTable(
     stepId: integer('step_id')
       .references(() => steps.id, { onDelete: 'cascade' })
       .notNull(),
-    author: text('author'),
+    parentId: integer('parent_id')
+      .references(() => stepComments.id, { onDelete: 'cascade' })
+      .default(null),
+    author: text('author').notNull(),
     content: text('content').notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
   },
   (table) => ({
     stepIdx: index('step_comments_step_idx').on(table.stepId),
-  })
+    parentIdx: index('step_comments_parent_idx').on(table.parentId),
+  }),
 );
 
 // Zod schemas for validation

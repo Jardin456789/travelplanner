@@ -19,7 +19,6 @@ import {
   arrayMove,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export interface ReorderableStep {
@@ -54,41 +53,44 @@ function SortableStepItem<T extends ReorderableStep>({
     transition,
   };
 
-  const dragHandleClass = cn(
-    'flex h-8 w-8 items-center justify-center rounded-md border text-gray-400 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400',
+  const cardClassName = cn(
+    'group relative flex flex-col gap-3 overflow-hidden rounded-xl border bg-white/95 p-4 shadow-sm transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400',
     isDragging
-      ? 'border-blue-300 bg-blue-50 text-blue-700 shadow'
-      : 'border-gray-200 bg-white hover:bg-gray-50',
-    disablePointer && 'cursor-not-allowed opacity-40'
+      ? 'border-sky-200 ring-2 ring-sky-300 shadow-lg'
+      : 'border-slate-200/80 hover:border-sky-200/70 hover:shadow-md',
+    disablePointer && 'cursor-not-allowed opacity-40',
   );
 
   return (
     <li
       ref={setNodeRef}
       style={style}
-      className={cn(
-        'flex items-start gap-3 rounded-lg border border-gray-200 bg-white p-3 shadow-sm transition-colors',
-        isDragging && 'ring-2 ring-blue-300'
-      )}
+      className={cardClassName}
       role="listitem"
       aria-roledescription="élément réorganisable"
+      {...(!disablePointer ? { ...attributes, ...listeners } : {})}
     >
-      <button
-        type="button"
-        className={dragHandleClass}
-        aria-label={`Déplacer ${step.title}`}
-        {...(!disablePointer ? { ...attributes, ...listeners } : {})}
-      >
-        <GripVertical className="h-4 w-4" aria-hidden="true" />
-      </button>
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-sky-400 via-cyan-300 to-indigo-400 opacity-90"
+      />
 
-      <div className="flex-1 space-y-1">
-        <div className="flex items-center justify-between text-xs text-gray-500">
-          <span className="font-medium text-gray-700">Étape {index + 1}</span>
-          {step.date && <span>{step.date}</span>}
+      <div className="relative flex flex-col gap-2">
+        <div className="flex items-center justify-between text-xs font-medium text-slate-500">
+          <span className="flex items-center gap-2 text-slate-600">
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-sky-100 text-[11px] font-semibold text-sky-600">
+              {index + 1}
+            </span>
+            Étape
+          </span>
+          {step.date && (
+            <span className="rounded-full bg-slate-100 px-2 py-[2px] text-[11px] text-slate-600">
+              {step.date}
+            </span>
+          )}
         </div>
-        <p className="text-sm font-semibold text-gray-900">{step.title}</p>
-        {step.notes && <p className="text-xs text-gray-500">{step.notes}</p>}
+        <p className="text-sm font-semibold text-slate-900">{step.title}</p>
+        {step.notes && <p className="text-xs leading-relaxed text-slate-500">{step.notes}</p>}
       </div>
     </li>
   );
@@ -109,7 +111,7 @@ export function ItineraryReorderList<T extends ReorderableStep>({
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 8 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
 
   const ids = useMemo(() => items.map((item) => item.id), [items]);
@@ -134,18 +136,16 @@ export function ItineraryReorderList<T extends ReorderableStep>({
         return reordered;
       });
     },
-    [ids, onChange]
+    [ids, onChange],
   );
 
   return (
-    <section
-      className={cn('space-y-4', className)}
-      aria-label={title ?? 'Réorganiser les étapes'}
-    >
+    <section className={cn('space-y-4', className)} aria-label={title ?? 'Réorganiser les étapes'}>
       <header className="space-y-1">
         {title && <h2 className="text-sm font-semibold text-gray-900">{title}</h2>}
         <p className="text-xs text-gray-500">
-          Astuce&nbsp;: utilisez la souris, le tactile ou le clavier (barre d’espace puis flèches) pour déplacer les étapes.
+          Astuce&nbsp;: attrapez n’importe quelle carte avec la souris, le tactile ou le clavier
+          (barre d’espace puis flèches) pour déplacer les étapes.
         </p>
       </header>
 

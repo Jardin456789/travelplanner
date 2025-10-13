@@ -1,7 +1,8 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
+import clsx from 'clsx';
 import { DayItinerary, Destination } from '@/types/travel';
 import { useUpdateStep, useCreateDestination, useDeleteStep } from '@/hooks/useTravelQueries';
 import { Button } from '@/components/ui/button';
@@ -16,6 +17,10 @@ type PlaceSuggestion = {
   coordinates?: { lat: number; lng: number };
   types?: string[];
 };
+
+type LatLng = { lat: number; lng: number };
+
+const COORDINATE_MATCH_THRESHOLD = 0.0003; // ~30m
 
 const MapPointSelector = dynamic(() => import('./MapPointSelector'), {
   ssr: false,
@@ -60,13 +65,26 @@ export function EditStepDialog({
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isMapSelectionOpen, setIsMapSelectionOpen] = useState(false);
-  const [mapSelectedCoordinates, setMapSelectedCoordinates] = useState<{ lat: number; lng: number } | null>(null);
+  const [mapSelectedCoordinates, setMapSelectedCoordinates] = useState<LatLng | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const languageCode: 'fr' | 'en' = 'fr';
+
+  const lastMapSelectionRef = useRef<LatLng | null>(null);
+  const selectionSourceRef = useRef<'map' | 'search' | 'initial' | null>(null);
 
   const updateStepMutation = useUpdateStep();
   const createDestinationMutation = useCreateDestination();
   const deleteStepMutation = useDeleteStep();
+
+  const areCoordinatesClose = useCallback((a: LatLng, b: LatLng) => {
+    const latDiff = Math.abs(a.lat - b.lat);
+    const lngDiff = Math.abs(a.lng - b.lng);
+    return latDiff <= COORDINATE_MATCH_THRESHOLD && lngDiff <= COORDINATE_MATCH_THRESHOLD;
+  }, []);
+
+  const buildFallbackName = useCallback((coordinates: LatLng) => {
+    return `Point (${coordinates.lat.toFixed(3)}, ${coordinates.lng.toFixed(3)})`;
+  }, []);
 
   useEffect(() => {
     if (isOpen && step) {
@@ -81,10 +99,14 @@ export function EditStepDialog({
           coordinates: step.destination.coordinates,
           types: step.destination.category ? [step.destination.category] : [],
         });
+        selectionSourceRef.current = 'initial';
+        lastMapSelectionRef.current = null;
         setMapSelectedCoordinates(step.destination.coordinates);
       } else {
         setSelectedPlace(null);
         setMapSelectedCoordinates(null);
+        selectionSourceRef.current = null;
+        lastMapSelectionRef.current = null;
       }
       setSubmissionError(null);
       setIsMapSelectionOpen(false);
@@ -99,6 +121,8 @@ export function EditStepDialog({
       setIsMapSelectionOpen(false);
       setMapSelectedCoordinates(null);
       setIsLoadingPlaceDetails(false);
+      selectionSourceRef.current = null;
+      lastMapSelectionRef.current = null;
     }
   }, [isOpen, step]);
 
@@ -144,94 +168,109 @@ export function EditStepDialog({
   }, [searchQuery, languageCode, isOpen]);
 
   useEffect(() => {
-    if (selectedPlace) {
-      setMapSelectedCoordinates(selectedPlace.coordinates);
+    if (!mapSelectedCoordinates) {
+      console.log('[EditStepDialog] mapSelectedCoordinates vides');
+      return;
     }
-  }, [selectedPlace]);
+
+    console.log('[EditStepDialog] mapSelectedCoordinates changées', mapSelectedCoordinates);
+
+    if (selectionSourceRef.current === 'map' && lastMapSelectionRef.current) {
+      if (!areCoordinatesClose(mapSelectedCoordinates, lastMapSelectionRef.current)) {
+        console.warn('[EditStepDialog] ⚠️ La sélection carte a été écrasée', {
+          attendu: lastMapSelectionRef.current,
+          recu: mapSelectedCoordinates,
+        });
+        setMapSelectedCoordinates(lastMapSelectionRef.current);
+      }
+    }
+  }, [mapSelectedCoordinates, areCoordinatesClose]);
 
   const closeDialog = useCallback(() => {
     onRequestClose();
   }, [onRequestClose]);
 
-  const handleSuggestionSelect = useCallback(async (suggestion: PlaceSuggestion) => {
-    try {
-      setIsLoadingPlaceDetails(true);
+  const handleSuggestionSelect = useCallback(
+    async (suggestion: PlaceSuggestion) => {
+      try {
+        setIsLoadingPlaceDetails(true);
+        setSubmissionError(null);
+        const response = await fetch('/api/places/details', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            placeId: suggestion.placeId,
+            languageCode,
+          }),
+        });
+
+        if (!response.ok) {
+          const details = await response.text();
+          throw new Error(details || 'Failed to fetch place details');
+        }
+
+        const data = (await response.json()) as { place: PlaceDetails };
+        setSelectedPlace(data.place);
+        setSearchQuery(suggestion.primaryText);
+        setSuggestions([]);
+        if (data.place.formattedAddress) {
+          setNotes((previousNotes) =>
+            previousNotes.trim() ? previousNotes : data.place.formattedAddress,
+          );
+        }
+        selectionSourceRef.current = 'search';
+        lastMapSelectionRef.current = null;
+        setMapSelectedCoordinates(data.place.coordinates);
+      } catch (error) {
+        console.error(error);
+        setSubmissionError(
+          error instanceof Error
+            ? error.message
+            : 'Impossible de récupérer les détails du lieu sélectionné.',
+        );
+      } finally {
+        setIsLoadingPlaceDetails(false);
+      }
+    },
+    [languageCode],
+  );
+
+  const handleMapPointSelect = useCallback(
+    (coordinates: { lat: number; lng: number }) => {
+      console.log('[EditStepDialog] Point cliqué sur la carte', coordinates);
+      const normalizedCoordinates: LatLng = {
+        lat: Number(coordinates.lat.toFixed(6)),
+        lng: Number(coordinates.lng.toFixed(6)),
+      };
+      selectionSourceRef.current = 'map';
+      lastMapSelectionRef.current = normalizedCoordinates;
+      setMapSelectedCoordinates(normalizedCoordinates);
       setSubmissionError(null);
-      const response = await fetch('/api/places/details', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          placeId: suggestion.placeId,
-          languageCode,
-        }),
-      });
-
-      if (!response.ok) {
-        const details = await response.text();
-        throw new Error(details || 'Failed to fetch place details');
-      }
-
-      const data = (await response.json()) as { place: PlaceDetails };
-      setSelectedPlace(data.place);
-      setSearchQuery(suggestion.primaryText);
-      setSuggestions([]);
-      if (data.place.formattedAddress) {
-        setNotes((previousNotes) => (previousNotes.trim() ? previousNotes : data.place.formattedAddress));
-      }
-      setMapSelectedCoordinates(data.place.coordinates);
-    } catch (error) {
-      console.error(error);
-      setSubmissionError(
-        error instanceof Error ? error.message : 'Impossible de récupérer les détails du lieu sélectionné.'
-      );
-    } finally {
       setIsLoadingPlaceDetails(false);
-    }
-  }, [languageCode]);
 
-  const handleMapPointSelect = useCallback(async (coordinates: { lat: number; lng: number }) => {
-    setMapSelectedCoordinates(coordinates);
-    setSubmissionError(null);
-    setIsLoadingPlaceDetails(true);
+      const customName = searchQuery.trim();
+      const fallbackName = buildFallbackName(normalizedCoordinates);
+      const nameToUse = customName || fallbackName;
 
-    try {
-      const response = await fetch('/api/places/reverse', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          coordinates,
-          languageCode,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText || 'Impossible de récupérer les informations du lieu sélectionné.');
-      }
-
-      const data = (await response.json()) as { place: PlaceDetails };
-      setSelectedPlace(data.place);
-      setSearchQuery(data.place.name || 'Point sélectionné');
-      if (data.place.formattedAddress) {
-        setNotes((previousNotes) => (previousNotes.trim() ? previousNotes : data.place.formattedAddress));
-      }
-    } catch (error) {
-      console.error('Reverse geocoding error', error);
       setSelectedPlace({
-        id: `${coordinates.lat.toFixed(5)},${coordinates.lng.toFixed(5)}`,
-        name: 'Point sélectionné',
+        id: `${normalizedCoordinates.lat.toFixed(5)},${normalizedCoordinates.lng.toFixed(5)}`,
+        name: nameToUse,
         formattedAddress: '',
-        coordinates,
+        coordinates: normalizedCoordinates,
         types: [],
       });
-      setSearchQuery('Point sélectionné');
-      setSubmissionError(
-        'Informations précises indisponibles pour ce point. Vous pouvez ajuster le nom et les notes manuellement.'
-      );
-    } finally {
-      setIsLoadingPlaceDetails(false);
-    }
-  }, [languageCode]);
+
+      if (!customName) {
+        setSearchQuery(fallbackName);
+      }
+
+      console.log('[EditStepDialog] Point mémorisé sans auto-complétion', {
+        coordinates: normalizedCoordinates,
+        name: nameToUse,
+      });
+    },
+    [buildFallbackName, searchQuery],
+  );
 
   const handleSubmit = useCallback(async () => {
     if (!step) {
@@ -243,21 +282,24 @@ export function EditStepDialog({
       return;
     }
 
-    const referenceName = (selectedPlace?.name ?? searchQuery ?? '').trim() || step.destination?.name ?? '';
-    const referenceCoordinates = selectedPlace?.coordinates ?? step.destination?.coordinates ?? null;
+    const baseName = (selectedPlace?.name ?? searchQuery ?? '').trim();
+    const referenceCoordinates =
+      selectedPlace?.coordinates ?? step.destination?.coordinates ?? null;
     const referenceAddress = selectedPlace?.formattedAddress ?? step.destination?.address ?? '';
-    const referenceTypes = selectedPlace?.types ?? (step.destination?.category ? [step.destination.category] : []);
-    const referenceId = selectedPlace?.id ?? (step.destination?.id ? step.destination.id.toString() : undefined);
-
-    if (!referenceName) {
-      setSubmissionError('Indiquez un nom pour cette destination.');
-      return;
-    }
+    const referenceTypes =
+      selectedPlace?.types ?? (step.destination?.category ? [step.destination.category] : []);
+    const referenceId =
+      selectedPlace?.id ?? (step.destination?.id ? step.destination.id.toString() : undefined);
 
     if (!referenceCoordinates) {
       setSubmissionError('Sélectionnez une destination pour cette étape.');
       return;
     }
+
+    const fallbackName = referenceCoordinates
+      ? buildFallbackName(referenceCoordinates)
+      : (step.destination?.name ?? 'Point sans nom');
+    const referenceName = baseName || step.destination?.name?.trim() || fallbackName;
 
     setIsSubmitting(true);
     setSubmissionError(null);
@@ -270,14 +312,8 @@ export function EditStepDialog({
           return true;
         }
 
-        if (destination.name.toLowerCase() === referenceName.toLowerCase()) {
-          return true;
-        }
-
         if (destination.coordinates) {
-          const latDiff = Math.abs(destination.coordinates.lat - referenceCoordinates.lat);
-          const lngDiff = Math.abs(destination.coordinates.lng - referenceCoordinates.lng);
-          return latDiff < 0.0005 && lngDiff < 0.0005;
+          return areCoordinatesClose(destination.coordinates, referenceCoordinates);
         }
 
         return false;
@@ -285,18 +321,26 @@ export function EditStepDialog({
 
       if (matchedDestination) {
         destinationId = matchedDestination.id;
-      } else if (!destinationId) {
+      }
+
+      const originalCoordinates = step.destination?.coordinates ?? null;
+      const hasOriginalId = typeof destinationId === 'number';
+      const coordinatesMatchOriginal =
+        originalCoordinates && referenceCoordinates
+          ? areCoordinatesClose(originalCoordinates, referenceCoordinates)
+          : false;
+      const nameChangedFromOriginal =
+        step.destination?.name &&
+        referenceName.toLowerCase() !== step.destination.name.toLowerCase();
+
+      const shouldCreateNewDestination =
+        !matchedDestination &&
+        ((hasOriginalId && (!coordinatesMatchOriginal || nameChangedFromOriginal)) ||
+          !hasOriginalId);
+
+      if (shouldCreateNewDestination) {
         const newDestination = await createDestinationMutation.mutateAsync({
-          name: referenceName || searchQuery,
-          description: undefined,
-          coordinates: referenceCoordinates,
-          address: referenceAddress || undefined,
-          category: referenceTypes?.[0] ?? undefined,
-        });
-        destinationId = newDestination.id;
-      } else if (step.destination?.id && referenceName !== step.destination.name) {
-        const newDestination = await createDestinationMutation.mutateAsync({
-          name: referenceName || searchQuery,
+          name: referenceName,
           description: undefined,
           coordinates: referenceCoordinates,
           address: referenceAddress || undefined,
@@ -338,7 +382,7 @@ export function EditStepDialog({
       setSubmissionError(
         error instanceof Error
           ? error.message
-          : 'Une erreur est survenue lors de la mise à jour de cette étape.'
+          : 'Une erreur est survenue lors de la mise à jour de cette étape.',
       );
     } finally {
       setIsSubmitting(false);
@@ -355,6 +399,8 @@ export function EditStepDialog({
     step,
     updateStepMutation,
     onStepUpdated,
+    areCoordinatesClose,
+    buildFallbackName,
   ]);
 
   const handleDeleteStep = useCallback(async () => {
@@ -362,7 +408,9 @@ export function EditStepDialog({
       return;
     }
 
-    const userConfirmed = window.confirm('Voulez-vous vraiment supprimer cette étape ? Cette action est définitive.');
+    const userConfirmed = window.confirm(
+      'Voulez-vous vraiment supprimer cette étape ? Cette action est définitive.',
+    );
     if (!userConfirmed) {
       return;
     }
@@ -375,7 +423,9 @@ export function EditStepDialog({
       closeDialog();
     } catch (error) {
       console.error('Erreur lors de la suppression:', error);
-      setSubmissionError('Impossible de supprimer cette étape pour le moment. Réessayez plus tard.');
+      setSubmissionError(
+        'Impossible de supprimer cette étape pour le moment. Réessayez plus tard.',
+      );
     } finally {
       setIsDeleting(false);
     }
@@ -385,13 +435,18 @@ export function EditStepDialog({
     return null;
   }
 
+  const shouldShowMap = isMapSelectionOpen;
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
-      <div className="w-full max-w-lg rounded-lg bg-white shadow-xl">
+      <div className="flex w-full max-w-5xl max-h-[90vh] flex-col overflow-hidden rounded-lg bg-white shadow-xl">
         <div className="flex items-center justify-between border-b border-gray-200 px-5 py-4">
           <div>
             <h2 className="text-base font-semibold text-gray-900">Modifier l&apos;étape</h2>
-            <p className="text-xs text-gray-500">Actualisez la destination, la date ou vos notes en conservant les activités existantes.</p>
+            <p className="text-xs text-gray-500">
+              Actualisez la destination, la date ou vos notes en conservant les activités
+              existantes.
+            </p>
           </div>
           <div className="flex items-center gap-1.5">
             {step.id && (
@@ -421,85 +476,134 @@ export function EditStepDialog({
           </div>
         </div>
 
-        <div className="px-5 py-4 space-y-4">
-          <div>
-            <div className="mb-1 flex items-center justify-between">
-              <label className="block text-xs font-medium text-gray-600">Destination</label>
-              <button
-                type="button"
-                className="text-xs font-medium text-blue-600 hover:text-blue-700"
-                onClick={() => setIsMapSelectionOpen((current) => !current)}
+        <div className="flex-1 overflow-hidden">
+          <div
+            className={clsx(
+              'flex h-full flex-col',
+              shouldShowMap
+                ? 'lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(360px,0.5fr)] lg:divide-x lg:divide-gray-200'
+                : '',
+            )}
+          >
+            <div className="flex h-full flex-col">
+              <div
+                className={clsx('flex-1 overflow-y-auto px-5 py-4 space-y-4', {
+                  'lg:pr-6': shouldShowMap,
+                })}
               >
-                {isMapSelectionOpen ? 'Fermer la carte' : 'Sélectionner sur la carte'}
-              </button>
-            </div>
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(event) => {
-                const { value } = event.target;
-                setSearchQuery(value);
-                setSubmissionError(null);
-                if (!value.trim()) {
-                  setSelectedPlace(null);
-                  setMapSelectedCoordinates(null);
-                } else {
-                  setSelectedPlace((previous) =>
-                    previous
-                      ? {
-                          ...previous,
-                          name: value,
-                        }
-                      : step.destination?.coordinates
-                      ? {
-                          id: step.destination.id ? step.destination.id.toString() : `dest-${step.order}`,
-                          name: value,
-                          formattedAddress: step.destination.address ?? '',
-                          coordinates: step.destination.coordinates,
-                          types: step.destination.category ? [step.destination.category] : [],
-                        }
-                      : null
-                  );
-                  if (!mapSelectedCoordinates && step.destination?.coordinates) {
-                    setMapSelectedCoordinates(step.destination.coordinates);
-                  }
-                }
-              }}
-              placeholder="Modifier le lieu de l'étape"
-              className="w-full rounded border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none"
-            />
-            {isLoadingSuggestions && (
-              <p className="mt-1 text-xs text-gray-400">Recherche…</p>
-            )}
-            {!isLoadingSuggestions && suggestions.length > 0 && (
-              <ul className="mt-2 max-h-48 overflow-y-auto rounded border border-gray-200 bg-white text-sm shadow-sm">
-                {suggestions.map((suggestion) => (
-                  <li
-                    key={suggestion.placeId}
-                    className="cursor-pointer px-3 py-2 hover:bg-blue-50"
-                    onClick={() => handleSuggestionSelect(suggestion)}
+                <div className="mb-1 flex items-center justify-between">
+                  <label className="block text-xs font-medium text-gray-600">Destination</label>
+                  <button
+                    type="button"
+                    className="text-xs font-medium text-blue-600 hover:text-blue-700"
+                    onClick={() => setIsMapSelectionOpen((current) => !current)}
                   >
-                    <div className="font-medium text-gray-800">{suggestion.primaryText}</div>
-                    {suggestion.secondaryText && (
-                      <div className="text-xs text-gray-500">{suggestion.secondaryText}</div>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            )}
-
-            {isMapSelectionOpen && (
-              <div className="mt-4 space-y-3 text-xs text-gray-600">
-                <div className="rounded-md border border-blue-100 bg-blue-50 px-3 py-2 text-blue-800">
-                  Cliquez sur la carte pour repositionner cette étape. Vous pourrez ajuster son nom ensuite si nécessaire.
+                    {shouldShowMap ? 'Masquer la carte' : 'Sélectionner sur la carte'}
+                  </button>
                 </div>
-                <MapPointSelector
-                  selectedCoordinates={mapSelectedCoordinates}
-                  onSelect={handleMapPointSelect}
-                  className="h-56"
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(event) => {
+                    const { value } = event.target;
+                    setSearchQuery(value);
+                    setSubmissionError(null);
+                    if (!value.trim()) {
+                      setSelectedPlace(null);
+                      setMapSelectedCoordinates(null);
+                    } else {
+                      setSelectedPlace((previous) =>
+                        previous
+                          ? {
+                              ...previous,
+                              name: value,
+                            }
+                          : step.destination?.coordinates
+                            ? {
+                                id: step.destination.id
+                                  ? step.destination.id.toString()
+                                  : `dest-${step.order}`,
+                                name: value,
+                                formattedAddress: step.destination.address ?? '',
+                                coordinates: step.destination.coordinates,
+                                types: step.destination.category ? [step.destination.category] : [],
+                              }
+                            : null,
+                      );
+                      if (!mapSelectedCoordinates && step.destination?.coordinates) {
+                        setMapSelectedCoordinates(step.destination.coordinates);
+                      }
+                    }
+                  }}
+                  placeholder="Modifier le lieu de l'étape"
+                  className="w-full rounded border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none"
                 />
-                {mapSelectedCoordinates && (
+                {isLoadingSuggestions && <p className="mt-1 text-xs text-gray-400">Recherche…</p>}
+                {!isLoadingSuggestions && suggestions.length > 0 && (
+                  <ul className="mt-2 max-h-48 overflow-y-auto rounded border border-gray-200 bg-white text-sm shadow-sm">
+                    {suggestions.map((suggestion) => (
+                      <li
+                        key={suggestion.placeId}
+                        className="cursor-pointer px-3 py-2 hover:bg-blue-50"
+                        onClick={() => handleSuggestionSelect(suggestion)}
+                      >
+                        <div className="font-medium text-gray-800">{suggestion.primaryText}</div>
+                        {suggestion.secondaryText && (
+                          <div className="text-xs text-gray-500">{suggestion.secondaryText}</div>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+
+                {shouldShowMap && (
+                  <div className="mt-4 space-y-3 text-xs text-gray-600 lg:hidden">
+                    <div className="rounded-md border border-blue-100 bg-blue-50 px-3 py-2 text-blue-800">
+                      Cliquez sur la carte pour repositionner cette étape. Vous pourrez ajuster son
+                      nom ensuite si nécessaire.
+                    </div>
+                    <div className="overflow-hidden rounded-md border border-gray-200">
+                      <MapPointSelector
+                        selectedCoordinates={mapSelectedCoordinates}
+                        onSelect={handleMapPointSelect}
+                        className="h-64"
+                      />
+                    </div>
+                    {mapSelectedCoordinates && (
+                      <div className="rounded border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-700">
+                        <div className="font-semibold text-gray-800">Point sélectionné</div>
+                        <p>Latitude : {mapSelectedCoordinates.lat.toFixed(6)}</p>
+                        <p>Longitude : {mapSelectedCoordinates.lng.toFixed(6)}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {mapSelectedCoordinates && !shouldShowMap && (
                   <div className="rounded border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-700">
+                    <div className="font-semibold text-gray-800">Point sélectionné</div>
+                    <p>Latitude : {mapSelectedCoordinates.lat.toFixed(6)}</p>
+                    <p>Longitude : {mapSelectedCoordinates.lng.toFixed(6)}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {shouldShowMap && (
+              <div className="hidden h-full flex-col overflow-hidden px-5 py-4 text-xs text-gray-600 lg:flex">
+                <div className="rounded-md border border-blue-100 bg-blue-50 px-3 py-2 text-blue-800">
+                  Cliquez sur la carte pour repositionner cette étape. Vous pourrez ajuster son nom
+                  ensuite si nécessaire.
+                </div>
+                <div className="mt-3 flex-1 overflow-hidden rounded-md border border-gray-200">
+                  <MapPointSelector
+                    selectedCoordinates={mapSelectedCoordinates}
+                    onSelect={handleMapPointSelect}
+                    className="h-full"
+                  />
+                </div>
+                {mapSelectedCoordinates && (
+                  <div className="mt-3 rounded border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-700">
                     <div className="font-semibold text-gray-800">Point sélectionné</div>
                     <p>Latitude : {mapSelectedCoordinates.lat.toFixed(6)}</p>
                     <p>Longitude : {mapSelectedCoordinates.lng.toFixed(6)}</p>
@@ -508,7 +612,9 @@ export function EditStepDialog({
               </div>
             )}
           </div>
+        </div>
 
+        <div className="px-5 py-4 space-y-4">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">Date</label>
@@ -552,7 +658,8 @@ export function EditStepDialog({
         <div className="border-t border-gray-200 px-5 py-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-xs text-gray-400">
-              Les modifications sont synchronisées avec votre itinéraire. Vérifiez les informations avant de valider.
+              Les modifications sont synchronisées avec votre itinéraire. Vérifiez les informations
+              avant de valider.
             </p>
             <div className="flex items-center justify-end gap-2">
               <Button

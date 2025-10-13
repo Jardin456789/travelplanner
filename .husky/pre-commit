@@ -1,17 +1,24 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
+set -e
+
 echo "🚀 Running pre-commit checks..."
+
+# Format staged files
+echo "🧹 Running lint-staged formatters..."
+npx lint-staged
+echo "✅ Formatting complete!"
 
 # Run ESLint (allow some warnings, block only errors)
 echo "🔍 Running ESLint..."
 npm run lint -- --max-warnings 25
-if [ $? -ne 0 ]; then
-  echo "❌ ESLint failed. Please fix the linting errors before committing."
-  exit 1
-fi
-
 echo "✅ ESLint passed!"
+
+# Run fast test sweep on changed files
+echo "🧪 Running targeted tests..."
+npm run test:changed -- --reporter=dot
+echo "✅ Tests passed!"
 
 # TODO: Add TypeScript checks when Mapbox types are better defined
 # For now, focus on ESLint to maintain code quality

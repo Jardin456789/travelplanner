@@ -1,5 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import type { Destination, DayItinerary, Itinerary, StepComment } from '@/types/travel';
+import type {
+  Destination,
+  DayItinerary,
+  Itinerary,
+  StepComment,
+  StepCommentThread,
+} from '@/types/travel';
 import { CACHE_TIMES } from '@/lib/query-config';
 
 // Query Keys
@@ -33,7 +39,7 @@ export function useItinerary(id: number) {
     queryFn: async (): Promise<Itinerary> => {
       const response = await fetch(`/api/itineraries/${id}`);
       if (!response.ok) {
-        throw new Error('Erreur lors de la récupération de l\'itinéraire');
+        throw new Error("Erreur lors de la récupération de l'itinéraire");
       }
       return response.json();
     },
@@ -78,7 +84,7 @@ export function useStep(id: number) {
     queryFn: async (): Promise<DayItinerary> => {
       const response = await fetch(`/api/steps/${id}`);
       if (!response.ok) {
-        throw new Error('Erreur lors de la récupération de l\'étape');
+        throw new Error("Erreur lors de la récupération de l'étape");
       }
       return response.json();
     },
@@ -90,7 +96,7 @@ export function useStep(id: number) {
 export function useStepComments(stepId?: number) {
   return useQuery({
     queryKey: stepId ? queryKeys.comments(stepId.toString()) : ['comments'],
-    queryFn: async (): Promise<StepComment[]> => {
+    queryFn: async (): Promise<StepCommentThread[]> => {
       if (!stepId) return [];
       const response = await fetch(`/api/comments?stepId=${stepId}`);
       if (!response.ok) {
@@ -125,7 +131,7 @@ export function useCreateItinerary() {
       });
 
       if (!response.ok) {
-        throw new Error('Erreur lors de la création de l\'itinéraire');
+        throw new Error("Erreur lors de la création de l'itinéraire");
       }
 
       return response.json();
@@ -219,7 +225,7 @@ export function useUpdateStep() {
       });
 
       if (!response.ok) {
-        throw new Error('Erreur lors de la mise à jour de l\'étape');
+        throw new Error("Erreur lors de la mise à jour de l'étape");
       }
 
       return response.json();
@@ -227,11 +233,11 @@ export function useUpdateStep() {
     onSuccess: (result, variables) => {
       // Invalider les queries liées
       queryClient.invalidateQueries({
-        queryKey: queryKeys.steps(variables.itineraryId.toString())
+        queryKey: queryKeys.steps(variables.itineraryId.toString()),
       });
       if (variables.id) {
         queryClient.invalidateQueries({
-          queryKey: queryKeys.step(variables.id.toString())
+          queryKey: queryKeys.step(variables.id.toString()),
         });
       }
     },
@@ -242,7 +248,12 @@ export function useCreateComment() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: { stepId: number; author?: string; content: string }) => {
+    mutationFn: async (data: {
+      stepId: number;
+      author: string;
+      content: string;
+      parentId?: number;
+    }) => {
       const response = await fetch('/api/comments', {
         method: 'POST',
         headers: {
@@ -252,7 +263,7 @@ export function useCreateComment() {
       });
 
       if (!response.ok) {
-        throw new Error('Erreur lors de l\'ajout du commentaire');
+        throw new Error("Erreur lors de l'ajout du commentaire");
       }
 
       return response.json() as Promise<StepComment>;
@@ -275,7 +286,7 @@ export function useDeleteStep() {
       });
 
       if (!response.ok) {
-        throw new Error('Erreur lors de la suppression de l\'étape');
+        throw new Error("Erreur lors de la suppression de l'étape");
       }
 
       return response.json();

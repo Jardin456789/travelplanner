@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { DayItinerary, Destination } from '@/types/travel';
+import { sortStepsChronologically } from '@/lib/map-utils';
 
 export interface DestinationGroup {
   destination: Destination;
@@ -10,11 +11,12 @@ export interface DestinationGroup {
 
 export const useDestinationGroups = (dayItineraries: DayItinerary[]): DestinationGroup[] => {
   return useMemo(() => {
+    const orderedSteps = sortStepsChronologically(dayItineraries);
     const groups: DestinationGroup[] = [];
     let currentGroup: DayItinerary[] = [];
 
-    for (let i = 0; i < dayItineraries.length; i++) {
-      const day = dayItineraries[i];
+    for (let i = 0; i < orderedSteps.length; i++) {
+      const day = orderedSteps[i];
 
       if (currentGroup.length === 0) {
         // Démarrer un nouveau groupe
@@ -23,8 +25,7 @@ export const useDestinationGroups = (dayItineraries: DayItinerary[]): Destinatio
         const lastDay = currentGroup[currentGroup.length - 1];
 
         // Vérifier si cette étape est consécutive et dans la même destination
-        if (lastDay.destination.id === day.destination.id &&
-            lastDay.order + 1 === day.order) {
+        if (lastDay.destination.id === day.destination.id && lastDay.order + 1 === day.order) {
           // Ajouter au groupe existant
           currentGroup.push(day);
         } else {
@@ -33,7 +34,7 @@ export const useDestinationGroups = (dayItineraries: DayItinerary[]): Destinatio
             destination: lastDay.destination,
             days: [...currentGroup],
             startOrder: currentGroup[0].order,
-            endOrder: currentGroup[currentGroup.length - 1].order
+            endOrder: currentGroup[currentGroup.length - 1].order,
           });
           currentGroup = [day];
         }
@@ -46,7 +47,7 @@ export const useDestinationGroups = (dayItineraries: DayItinerary[]): Destinatio
         destination: currentGroup[0].destination,
         days: [...currentGroup],
         startOrder: currentGroup[0].order,
-        endOrder: currentGroup[currentGroup.length - 1].order
+        endOrder: currentGroup[currentGroup.length - 1].order,
       });
     }
 

@@ -2,6 +2,7 @@
  * Button Component Tests
  */
 
+import React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi } from 'vitest';
@@ -16,21 +17,21 @@ describe('Button', () => {
   });
 
   it('renders with different variants', () => {
-    const { rerender } = render(<Button variant="secondary">Secondary</Button>);
+    const { rerender } = render(<Button variant='secondary'>Secondary</Button>);
     expect(screen.getByRole('button')).toHaveClass('bg-secondary');
 
-    rerender(<Button variant="destructive">Destructive</Button>);
+    rerender(<Button variant='destructive'>Destructive</Button>);
     expect(screen.getByRole('button')).toHaveClass('bg-error');
 
-    rerender(<Button variant="outline">Outline</Button>);
+    rerender(<Button variant='outline'>Outline</Button>);
     expect(screen.getByRole('button')).toHaveClass('border-border');
   });
 
   it('renders with different sizes', () => {
-    const { rerender } = render(<Button size="sm">Small</Button>);
+    const { rerender } = render(<Button size='sm'>Small</Button>);
     expect(screen.getByRole('button')).toHaveClass('h-8');
 
-    rerender(<Button size="lg">Large</Button>);
+    rerender(<Button size='lg'>Large</Button>);
     expect(screen.getByRole('button')).toHaveClass('h-10');
   });
 
@@ -48,7 +49,11 @@ describe('Button', () => {
   it('is disabled when disabled prop is true', async () => {
     const user = userEvent.setup();
     const handleClick = vi.fn();
-    render(<Button disabled onClick={handleClick}>Disabled</Button>);
+    render(
+      <Button disabled onClick={handleClick}>
+        Disabled
+      </Button>
+    );
 
     const button = screen.getByRole('button');
     expect(button).toBeDisabled();
@@ -68,7 +73,7 @@ describe('Button', () => {
   it('renders with icons', () => {
     render(
       <Button>
-        <span data-testid="icon">🚀</span>
+        <span data-testid='icon'>🚀</span>
         With Icon
       </Button>
     );
@@ -82,4 +87,3 @@ describe('Button', () => {
     expect(ref).toHaveBeenCalled();
   });
 });
-

@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { DayItinerary } from '@/types/travel';
-import { calculateDistance, getMidpoint } from '@/lib/map-utils';
+import { calculateDistance, getMidpoint, sortStepsChronologically } from '@/lib/map-utils';
 
 export interface TransportSegment {
   id: string;
@@ -14,47 +14,48 @@ export interface TransportSegment {
   };
 }
 
-export const useTransportSegments = (
-  dayItineraries: DayItinerary[]
-): TransportSegment[] => {
+export const useTransportSegments = (dayItineraries: DayItinerary[]): TransportSegment[] => {
   return useMemo(() => {
-    // Toujours retourner les segments, l'affichage sera géré par le composant TransportMarkers
+    const orderedSteps = sortStepsChronologically(dayItineraries);
+    const segments: TransportSegment[] = [];
 
-    const orderedSteps = [...dayItineraries].sort((a, b) => a.order - b.order);
+    for (let index = 0; index < orderedSteps.length - 1; index += 1) {
+      const currentStep = orderedSteps[index];
+      const nextStep = orderedSteps[index + 1];
 
-    return orderedSteps
-      .filter(day => day.transportToNext)
-      .map((day) => {
-        const nextDay = dayItineraries.find(d => d.order === day.order + 1);
-        if (!nextDay || !day.transportToNext) return null;
+      if (!currentStep.transportToNext) {
+        continue;
+      }
 
-        const startCoordinates = day.destination?.coordinates;
-        const endCoordinates = nextDay.destination?.coordinates;
+      const startCoordinates = currentStep.destination?.coordinates;
+      const endCoordinates = nextStep.destination?.coordinates;
 
-        if (!startCoordinates || !endCoordinates) {
-          return null;
-        }
+      if (!startCoordinates || !endCoordinates) {
+        continue;
+      }
 
-        const startCoord: [number, number] = [startCoordinates.lng, startCoordinates.lat];
-        const endCoord: [number, number] = [endCoordinates.lng, endCoordinates.lat];
+      const sameDestination = currentStep.destination.id === nextStep.destination.id;
+      if (sameDestination) {
+        continue;
+      }
 
-        // Vérifier si c'est la même destination (séjour prolongé dans une ville)
-        const sameDestination = day.destination.id === nextDay.destination.id;
-        if (sameDestination) return null; // Pas d'icône pour les séjours dans la même ville
+      const startCoord: [number, number] = [startCoordinates.lng, startCoordinates.lat];
+      const endCoord: [number, number] = [endCoordinates.lng, endCoordinates.lat];
+      const distance = calculateDistance(startCoord, endCoord);
+      if (distance < 5) {
+        continue;
+      }
 
-        // Calculer la distance et filtrer les transports trop courts (< 5km)
-        const distance = calculateDistance(startCoord, endCoord);
-        if (distance < 5) return null; // Ne pas afficher les icônes pour les déplacements très courts
+      const midpoint = getMidpoint(startCoord, endCoord);
 
-        const midpoint = getMidpoint(startCoord, endCoord);
+      segments.push({
+        id: `transport-${currentStep.order}`,
+        type: currentStep.transportToNext.type,
+        position: midpoint,
+        transport: currentStep.transportToNext,
+      });
+    }
 
-        return {
-          id: `transport-${day.order}`,
-          type: day.transportToNext.type,
-          position: midpoint,
-          transport: day.transportToNext
-        };
-      })
-      .filter(Boolean) as TransportSegment[];
+    return segments;
   }, [dayItineraries]);
 };

@@ -4,23 +4,31 @@ import { MapPin, Plane, Bus, Train, Car, Bike, Ship, Footprints } from 'lucide-r
 // Fonction pour obtenir l'icône de transport
 export const getTransportIcon = (type: TransportType) => {
   switch (type) {
-    case 'plane': return Plane;
-    case 'bus': return Bus;
-    case 'train': return Train;
-    case 'car': return Car;
-    case 'bike': return Bike;
-    case 'boat': return Ship;
-    case 'walk': return Footprints;
-    default: return MapPin;
+    case 'plane':
+      return Plane;
+    case 'bus':
+      return Bus;
+    case 'train':
+      return Train;
+    case 'car':
+      return Car;
+    case 'bike':
+      return Bike;
+    case 'boat':
+      return Ship;
+    case 'walk':
+      return Footprints;
+    default:
+      return MapPin;
   }
 };
 
 // Fonction pour calculer le point milieu entre deux coordonnées
-export const getMidpoint = (coord1: [number, number], coord2: [number, number]): [number, number] => {
-  return [
-    (coord1[0] + coord2[0]) / 2,
-    (coord1[1] + coord2[1]) / 2
-  ];
+export const getMidpoint = (
+  coord1: [number, number],
+  coord2: [number, number],
+): [number, number] => {
+  return [(coord1[0] + coord2[0]) / 2, (coord1[1] + coord2[1]) / 2];
 };
 
 // Fonction pour calculer la distance approximative entre deux points (en km)
@@ -29,14 +37,17 @@ export const calculateDistance = (coord1: [number, number], coord2: [number, num
   const [lng2, lat2] = coord2;
 
   const R = 6371; // Rayon de la Terre en km
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
 
-  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-    Math.sin(dLng/2) * Math.sin(dLng/2);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLng / 2) *
+      Math.sin(dLng / 2);
 
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
 };
 
@@ -57,7 +68,7 @@ export const calculateMapBounds = (destinations: Destination[]) => {
   let minLng = Infinity;
   let maxLng = -Infinity;
 
-  destinations.forEach(dest => {
+  destinations.forEach((dest) => {
     minLat = Math.min(minLat, dest.coordinates.lat);
     maxLat = Math.max(maxLat, dest.coordinates.lat);
     minLng = Math.min(minLng, dest.coordinates.lng);
@@ -77,31 +88,80 @@ export const calculateMapBounds = (destinations: Destination[]) => {
   const maxDiff = Math.max(latDiff, lngDiff);
   let zoom = 12;
 
-  if (maxDiff > 10) zoom = 4;      // Très grande distance (continents)
-  else if (maxDiff > 5) zoom = 5;  // Grande distance (pays)
-  else if (maxDiff > 2) zoom = 6;  // Distance moyenne (régions)
-  else if (maxDiff > 1) zoom = 7;  // Petite distance
-  else if (maxDiff > 0.5) zoom = 8; // Très petite distance
-  else if (maxDiff > 0.2) zoom = 9; // Distance locale
-  else zoom = 10;                  // Distance très locale
+  if (maxDiff > 10)
+    zoom = 4; // Très grande distance (continents)
+  else if (maxDiff > 5)
+    zoom = 5; // Grande distance (pays)
+  else if (maxDiff > 2)
+    zoom = 6; // Distance moyenne (régions)
+  else if (maxDiff > 1)
+    zoom = 7; // Petite distance
+  else if (maxDiff > 0.5)
+    zoom = 8; // Très petite distance
+  else if (maxDiff > 0.2)
+    zoom = 9; // Distance locale
+  else zoom = 10; // Distance très locale
 
   return {
     center: [centerLat, centerLng] as [number, number],
-    zoom: Math.max(3, Math.min(15, zoom)) // Limiter entre 3 et 15
+    zoom: Math.max(3, Math.min(15, zoom)), // Limiter entre 3 et 15
   };
 };
 
 // Fonction pour déterminer le centre et zoom optimal en privilégiant l'étape actuelle
-export const calculateOptimalView = (destinations: Destination[], dayItineraries: DayItinerary[], currentStep?: DayItinerary | null) => {
+export const calculateOptimalView = (
+  destinations: Destination[],
+  dayItineraries: DayItinerary[],
+  currentStep?: DayItinerary | null,
+) => {
   // Si on a une étape actuelle, centrer dessus avec un zoom confortable
   if (currentStep) {
     const { coordinates } = currentStep.destination;
     return {
       center: [coordinates.lat, coordinates.lng] as [number, number],
-      zoom: 6 // Zoom plus large pour voir la région autour de l'étape actuelle
+      zoom: 6, // Zoom plus large pour voir la région autour de l'étape actuelle
     };
   }
 
   // Sinon, utiliser le calcul par défaut
   return calculateMapBounds(destinations);
+};
+
+const getChronologicalValue = (step: DayItinerary) => {
+  const timestamp = Date.parse(step.date);
+  if (Number.isNaN(timestamp)) {
+    return { hasValidDate: false as const, timestamp: Number.POSITIVE_INFINITY };
+  }
+  return { hasValidDate: true as const, timestamp };
+};
+
+export const compareStepsChronologically = (first: DayItinerary, second: DayItinerary) => {
+  const firstMeta = getChronologicalValue(first);
+  const secondMeta = getChronologicalValue(second);
+
+  if (
+    firstMeta.hasValidDate &&
+    secondMeta.hasValidDate &&
+    firstMeta.timestamp !== secondMeta.timestamp
+  ) {
+    return firstMeta.timestamp - secondMeta.timestamp;
+  }
+
+  if (firstMeta.hasValidDate !== secondMeta.hasValidDate) {
+    return firstMeta.hasValidDate ? -1 : 1;
+  }
+
+  if (first.order !== second.order) {
+    return first.order - second.order;
+  }
+
+  if (typeof first.id === 'number' && typeof second.id === 'number' && first.id !== second.id) {
+    return first.id - second.id;
+  }
+
+  return 0;
+};
+
+export const sortStepsChronologically = (steps: DayItinerary[]): DayItinerary[] => {
+  return [...steps].sort(compareStepsChronologically);
 };

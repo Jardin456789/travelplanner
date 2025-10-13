@@ -1,0 +1,274 @@
+[
+  {
+    "table_name": "destinations",
+    "column_name": "id",
+    "data_type": "integer",
+    "is_nullable": "NO",
+    "column_default": "nextval('destinations_id_seq'::regclass)",
+    "is_identity": "NO"
+  },
+  {
+    "table_name": "destinations",
+    "column_name": "name",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "is_identity": "NO"
+  },
+  {
+    "table_name": "destinations",
+    "column_name": "description",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "is_identity": "NO"
+  },
+  {
+    "table_name": "destinations",
+    "column_name": "coordinates",
+    "data_type": "jsonb",
+    "is_nullable": "NO",
+    "column_default": null,
+    "is_identity": "NO"
+  },
+  {
+    "table_name": "destinations",
+    "column_name": "address",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "is_identity": "NO"
+  },
+  {
+    "table_name": "destinations",
+    "column_name": "category",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "is_identity": "NO"
+  },
+  {
+    "table_name": "destinations",
+    "column_name": "created_at",
+    "data_type": "timestamp without time zone",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "is_identity": "NO"
+  },
+  {
+    "table_name": "destinations",
+    "column_name": "updated_at",
+    "data_type": "timestamp without time zone",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "is_identity": "NO"
+  },
+  {
+    "table_name": "itineraries",
+    "column_name": "id",
+    "data_type": "integer",
+    "is_nullable": "NO",
+    "column_default": "nextval('itineraries_id_seq'::regclass)",
+    "is_identity": "NO"
+  },
+  {
+    "table_name": "itineraries",
+    "column_name": "title",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "is_identity": "NO"
+  },
+  {
+    "table_name": "itineraries",
+    "column_name": "description",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "is_identity": "NO"
+  },
+  {
+    "table_name": "itineraries",
+    "column_name": "start_date",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "is_identity": "NO"
+  },
+  {
+    "table_name": "itineraries",
+    "column_name": "end_date",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "is_identity": "NO"
+  },
+  {
+    "table_name": "itineraries",
+    "column_name": "total_budget",
+    "data_type": "integer",
+    "is_nullable": "YES",
+    "column_default": null,
+    "is_identity": "NO"
+  },
+  {
+    "table_name": "itineraries",
+    "column_name": "currency",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "is_identity": "NO"
+  },
+  {
+    "table_name": "itineraries",
+    "column_name": "created_at",
+    "data_type": "timestamp without time zone",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "is_identity": "NO"
+  },
+  {
+    "table_name": "itineraries",
+    "column_name": "updated_at",
+    "data_type": "timestamp without time zone",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "is_identity": "NO"
+  },
+  {
+    "table_name": "steps",
+    "column_name": "id",
+    "data_type": "integer",
+    "is_nullable": "NO",
+    "column_default": "nextval('steps_id_seq'::regclass)",
+    "is_identity": "NO"
+  },
+  {
+    "table_name": "steps",
+    "column_name": "itinerary_id",
+    "data_type": "integer",
+    "is_nullable": "NO",
+    "column_default": null,
+    "is_identity": "NO"
+  },
+  {
+    "table_name": "steps",
+    "column_name": "date",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "is_identity": "NO"
+  },
+  {
+    "table_name": "steps",
+    "column_name": "destination_id",
+    "data_type": "integer",
+    "is_nullable": "NO",
+    "column_default": null,
+    "is_identity": "NO"
+  },
+  {
+    "table_name": "steps",
+    "column_name": "notes",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "is_identity": "NO"
+  },
+  {
+    "table_name": "steps",
+    "column_name": "order",
+    "data_type": "integer",
+    "is_nullable": "NO",
+    "column_default": null,
+    "is_identity": "NO"
+  },
+  {
+    "table_name": "steps",
+    "column_name": "activities",
+    "data_type": "jsonb",
+    "is_nullable": "NO",
+    "column_default": "'[]'::jsonb",
+    "is_identity": "NO"
+  },
+  {
+    "table_name": "steps",
+    "column_name": "bike_segment",
+    "data_type": "jsonb",
+    "is_nullable": "YES",
+    "column_default": null,
+    "is_identity": "NO"
+  },
+  {
+    "table_name": "steps",
+    "column_name": "transport_to_next",
+    "data_type": "jsonb",
+    "is_nullable": "YES",
+    "column_default": null,
+    "is_identity": "NO"
+  },
+  {
+    "table_name": "steps",
+    "column_name": "created_at",
+    "data_type": "timestamp without time zone",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "is_identity": "NO"
+  },
+  {
+    "table_name": "steps",
+    "column_name": "updated_at",
+    "data_type": "timestamp without time zone",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "is_identity": "NO"
+  },
+  {
+    "table_name": "step_comments",
+    "column_name": "id",
+    "data_type": "integer",
+    "is_nullable": "NO",
+    "column_default": "nextval('step_comments_id_seq'::regclass)",
+    "is_identity": "NO"
+  },
+  {
+    "table_name": "step_comments",
+    "column_name": "step_id",
+    "data_type": "integer",
+    "is_nullable": "NO",
+    "column_default": null,
+    "is_identity": "NO"
+  },
+  {
+    "table_name": "step_comments",
+    "column_name": "parent_id",
+    "data_type": "integer",
+    "is_nullable": "YES",
+    "column_default": null,
+    "is_identity": "NO"
+  },
+  {
+    "table_name": "step_comments",
+    "column_name": "author",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "is_identity": "NO"
+  },
+  {
+    "table_name": "step_comments",
+    "column_name": "content",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "is_identity": "NO"
+  },
+  {
+    "table_name": "step_comments",
+    "column_name": "created_at",
+    "data_type": "timestamp without time zone",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "is_identity": "NO"
+  }
+]

@@ -37,10 +37,13 @@ export default function MapPointSelector({
 
   useEffect(() => {
     if (!selectedCoordinates) {
+      console.log('[MapPointSelector] Aucun point sélectionné, vue par défaut.');
       return;
     }
 
     const { lat, lng } = selectedCoordinates;
+
+    console.log('[MapPointSelector] Nouveau point sélectionné -> centrage', { lat, lng });
 
     setViewState((previous) => ({
       ...previous,
@@ -65,7 +68,11 @@ export default function MapPointSelector({
     }
 
     return (
-      <Marker longitude={selectedCoordinates.lng} latitude={selectedCoordinates.lat} anchor="bottom">
+      <Marker
+        longitude={selectedCoordinates.lng}
+        latitude={selectedCoordinates.lat}
+        anchor="bottom"
+      >
         <div className="pointer-events-none flex -translate-y-1 flex-col items-center gap-1">
           <span className="rounded-full bg-blue-600/80 px-2 py-0.5 text-[10px] font-semibold text-white shadow-sm">
             Point sélectionné
@@ -78,6 +85,7 @@ export default function MapPointSelector({
 
   const handleClick = (event: MapLayerMouseEvent) => {
     const { lat, lng } = event.lngLat;
+    console.log('[MapPointSelector] Clic détecté sur la carte', { lat, lng });
     onSelect({ lat, lng });
   };
 

@@ -1,7 +1,15 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Sparkles, MessageSquare, LocateFixed, MapPin, ListChecks } from 'lucide-react';
+import {
+  LocateFixed,
+  ListChecks,
+  Map,
+  MapPin,
+  MessageSquarePlus,
+  MousePointerClick,
+  Smartphone,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 type TutorialDialogProps = {
@@ -23,34 +31,57 @@ type TutorialStep = {
 const tutorialSteps: TutorialStep[] = [
   {
     title: 'Bienvenue dans Travel Planner',
-    description: 'Un rapide tour d’horizon pour comprendre comment votre itinéraire s’organise à l’écran.',
+    description:
+      'Un rapide tour d’horizon chaleureux pour comprendre comment votre itinéraire prend vie à l’écran.',
     highlights: [
-      { icon: Sparkles, text: 'La carte à droite met en scène vos destinations et trajets dans l’ordre du voyage.' },
-      { icon: ListChecks, text: 'La colonne à gauche liste chaque étape : cliquez sur une carte d’étape pour afficher les détails.' },
+      {
+        icon: Map,
+        text: 'La carte à droite met en scène vos destinations et vos trajets, pour visualiser chaque instant du voyage.',
+      },
+      {
+        icon: ListChecks,
+        text: 'La colonne à gauche liste chaque étape : cliquez sur une carte d’étape pour afficher les détails.',
+      },
     ],
   },
   {
     title: 'Capturer vos notes et commentaires',
-    description: 'Chaque étape dispose d’un espace pour conserver vos idées, adresses et informations pratiques.',
+    description:
+      'Chaque étape dispose d’un espace cosy pour garder vos idées, adresses et infos pratiques sous la main.',
     highlights: [
-      { icon: MessageSquare, text: 'Sélectionnez une étape puis cliquez sur “Modifier l’étape” pour ouvrir la fiche complète.' },
-      { icon: Sparkles, text: 'Renseignez vos commentaires dans la section “Notes” et enregistrez : tout reste synchronisé.' },
+      {
+        icon: MousePointerClick,
+        text: 'Cliquez sur une étape pour afficher toutes ses infos utiles en un clin d’œil.',
+      },
+      {
+        icon: MessageSquarePlus,
+        text: 'Ajoutez vos commentaires en cliquant sur l’icône « commenter » dédiée.',
+      },
     ],
   },
   {
     title: 'Se repérer rapidement',
-    description: 'Gardez toujours un œil sur l’étape où vous vous trouvez et naviguez facilement sur la carte.',
+    description:
+      'Gardez toujours un œil sur l’étape où vous vous trouvez et naviguez facilement sur la carte.',
     highlights: [
-      { icon: LocateFixed, text: 'Le bouton circulaire en haut à gauche de la carte recentre l’affichage sur l’étape du jour.' },
-      { icon: MapPin, text: 'Cliquez sur un point de la carte pour ouvrir l’étape correspondante et accéder à ses détails.' },
+      {
+        icon: LocateFixed,
+        text: 'Le bouton circulaire en haut à gauche de la carte vous recentre sur l’étape du moment, pile là où vous êtes !',
+      },
+      {
+        icon: MapPin,
+        text: 'Cliquez sur un point de la carte pour ouvrir l’étape correspondante et accéder à ses détails.',
+      },
     ],
   },
   {
     title: 'Construire votre voyage pas à pas',
     description: 'Ajoutez, réorganisez ou explorez vos étapes depuis n’importe quel appareil.',
     highlights: [
-      { icon: Sparkles, text: 'Le bouton “+” flottant vous permet d’ajouter rapidement une nouvelle étape à la suite du parcours.' },
-      { icon: MessageSquare, text: 'Sur mobile, faites glisser horizontalement pour passer d’une étape à l’autre sans quitter la carte.' },
+      {
+        icon: Smartphone,
+        text: 'Sur mobile, faites glisser horizontalement pour passer d’une étape à l’autre sans quitter la carte.',
+      },
     ],
   },
 ];
@@ -118,7 +149,10 @@ export function TutorialDialog({ open, onClose }: TutorialDialogProps) {
             {visibleStep.highlights.map((highlight, index) => {
               const Icon = highlight.icon;
               return (
-                <li key={index} className="flex gap-3 rounded-xl border border-gray-100 bg-gray-50 px-4 py-3">
+                <li
+                  key={index}
+                  className="flex gap-3 rounded-xl border border-gray-100 bg-gray-50 px-4 py-3"
+                >
                   <div className="mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-600">
                     <Icon className="h-5 w-5" aria-hidden />
                   </div>

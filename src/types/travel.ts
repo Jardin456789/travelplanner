@@ -69,9 +69,14 @@ export interface DayItinerary {
 export interface StepComment {
   id: number;
   stepId: number;
+  parentId?: number | null;
   author?: string | null;
   content: string;
   createdAt: string;
+}
+
+export interface StepCommentThread extends StepComment {
+  replies: StepCommentThread[];
 }
 
 export interface Itinerary {
